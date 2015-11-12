@@ -1,4 +1,11 @@
 #!/bin/bash
+
+cuckoo_api_url = "http://crg.circl.lu:8090"
+cuckoo_api_tasks_create_file = "/tasks/create/file"
+cuckoo_api_tasks_view = "/tasks/view/"
+
+submission_mail = "info@circl.lu"
+
 while true
 do
     LISTSIZE=$(redis-cli -n 5 LLEN submit)
@@ -15,12 +22,12 @@ do
         echo "file ${file}"
         echo "machine ${machine}"
         echo "package ${package}"
-        task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} http://crg.circl.lu:8090/tasks/create/file | jq -r .task_id`
+        task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${cuckoo_api_url}${cuckoo_api_tasks_create_file} | jq -r .task_id`
         echo "task_id ${task_id}"
         status=$(redis-cli -n 5 SADD t:${user} ${task_id})
-        s=`curl http://crg.circl.lu:8090/tasks/view/${task_id} >/tmp/c-$$`
-        fe=`gpg -e -o /tmp/e-$$.gpg -r info@circl.lu ${file}`
-        smail=`mutt -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- info@circl.lu </tmp/c-$$`
+        s=`curl ${cuckoo_api_url}${cuckoo_api_tasks_view}${task_id} >/tmp/c-$$`
+        fe=`gpg -e -o /tmp/e-$$.gpg -r ${submission_mail} ${file}`
+        smail=`mutt -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- ${submission_mail} </tmp/c-$$`
         rm /tmp/e-$$.gpg
     done
     sleep 10
