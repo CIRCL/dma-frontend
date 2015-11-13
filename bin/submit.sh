@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cuckoo_api_url = "http://crg.circl.lu:8090"
+cuckoo_api_url = "http://localhost:8090"
 cuckoo_api_tasks_create_file = "/tasks/create/file"
 cuckoo_api_tasks_view = "/tasks/view/"
 
