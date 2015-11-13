@@ -67,6 +67,10 @@ def index():
     m = machines()
     return render_template('main.html', auth=auth, s=s, machines=m)
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 @app.route('/upload', methods=['GET', 'POST'])
 @auth.login_required
 def upload():
@@ -74,9 +78,9 @@ def upload():
     m = machines()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
-        sfname = secure_filename(f.filename)
-        f.filename = sfname
-        save(f)
+        if f and allowed_file(f.filename):
+            sfname = secure_filename(f.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOADS_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m)
