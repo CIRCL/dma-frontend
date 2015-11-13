@@ -16,6 +16,8 @@ users = {
     "admin": "test",
 }
 
+ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
+
 # Configurables
 
 BASE_URL = "http://localhost:8090"
@@ -29,7 +31,7 @@ app.config.from_object(__name__)
 app.config['DEBUG'] = True
 #app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
-app.config['UPLOADS_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
+app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 app.config['SECRET_KEY'] = 'put your secret key'
 #init(SQLAlchemy(app), get_default_storage_class(app))
 auth = HTTPDigestAuth()
