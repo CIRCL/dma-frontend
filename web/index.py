@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.3
+#!/usr/bin/env python3.5
 # -*- coding: utf-8 -*-
 #
 
@@ -18,6 +18,7 @@ users = {
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
+app.config['DEBUG'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///home/youruser/tmp/test.db'
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOADS_FOLDER']  = '/home/youruser/dma/web/static/upload'
@@ -51,14 +52,14 @@ def get_pw(username):
 @app.route('/')
 @auth.login_required
 def index():
-    s = status(auth.username)
+    s = status(auth.username())
     m = machines()
     return render_template('main.html', auth=auth, s=s, machines=m)
 
 @app.route('/upload', methods=['GET', 'POST'])
 @auth.login_required
 def upload():
-    s = status(auth.username)
+    s = status(auth.username())
     m = machines()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
@@ -66,19 +67,18 @@ def upload():
         f.filename = sfname
         save(f)
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        r.rpush("submit", auth.username+":"+app.config['UPLOADS_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
+        r.rpush("submit", auth.username()+":"+app.config['UPLOADS_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m)
 
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
 def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+auth.username)
+    t = red.smembers("t:"+auth.username())
     if str(taskid) in t:
         r = requests.get("http://crg.circl.lu:8090/tasks/report/"+str(taskid)+"/html")
         return r.text
     else:
         return "Not allowed"
 if __name__ == '__main__':
-        app.run(debug=False, host='0.0.0.0')
-
+        app.run(host='0.0.0.0')
