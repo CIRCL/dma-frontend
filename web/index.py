@@ -80,9 +80,9 @@ def upload():
         f = request.files['sample']
         if f and allowed_file(f.filename):
             sfname = secure_filename(f.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        r.rpush("submit", auth.username()+":"+app.config['UPLOADS_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
+        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m)
 
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
