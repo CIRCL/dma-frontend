@@ -9,11 +9,11 @@ GPG_ENABLE=false
 
 SUBMISSION_MAIL="steve.clement@circl.lu"
 
-if [ ${CUCKOO_VERSION} != "" ]; then
+if [ "${CUCKOO_VERSION}" != "" ]; then
     echo "You run cuckoo version ${CUCKOO_VERSION}"
 else
     echo "Could not get cuckoo version from API, perhaps api.py not running?"
-    break
+    exit -1
 fi
 
 while true
