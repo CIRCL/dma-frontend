@@ -15,7 +15,9 @@ while true
 do
     LISTSIZE=$(redis-cli -n 5 LLEN submit)
     START=0
-    echo ${LISTSIZE}
+    if [ "${LISTSIZE}" != 0 ]; then
+        echo ${LISTSIZE}
+    fi
     for (( c=1; c<=$LISTSIZE; c++ ))
     do
         VAL=$(redis-cli -n 5 LPOP submit)
