@@ -112,11 +112,21 @@ def machines():
     r = requests.get(BASE_URL+MACHINES_LIST)
     return json.loads(r.text)
 
-@auth.get_password
-def get_pw(username):
+@auth.verify_password
+def verify_password(username, password):
     if username in users:
-        return users[username]
-    return None
+        user = username
+    else:
+        return False
+    g.user = user
+    return flask_bcrypt.check_password_hash(users[username], password)
+
+#@auth.get_password
+#def get_pw(username):
+#    if username in users:
+#        return users[username]
+#        return flask_bcrypt.check_password_hash(users[username], password)
+#    return None
 
 @app.route('/')
 @auth.login_required
