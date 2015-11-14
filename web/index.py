@@ -3,23 +3,25 @@
 #
 
 import os.path
+import requests, json, pickle
 from flask import Flask, render_template, url_for, request, g, redirect
 from flask.ext.httpauth import HTTPDigestAuth
-#from flask.ext.uploads import delete, init, save, Upload
-#from flask.ext.sqlalchemy import SQLAlchemy
-#from flask.ext.storage import get_default_storage_class
+from flask.ext.bcrypt import Bcrypt
+from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.utils import secure_filename
-import redis
-import requests
-import json
+from werkzeug.datastructures import CallbackDict
+from datetime import timedelta
+from uuid import uuid4
+from redis import Redis
+
 users = {
-    "admin": "test",
+    'admin': b'$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
 }
 
+# Allowed extensions to be uploaded
 ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
 
 # Configurables
-
 BASE_URL = "http://localhost:8090"
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
@@ -27,19 +29,75 @@ MACHINES_LIST = "/machines/list"
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///home/cuckoo/tmp/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///home/cuckoo/tmp/test.db'
 app.config['DEBUG'] = True
-#app.config['PROPAGATE_EXCEPTIONS'] = True
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 app.config['SECRET_KEY'] = 'put your secret key'
-#init(SQLAlchemy(app), get_default_storage_class(app))
+
 auth = HTTPDigestAuth()
 
+class RedisSession(CallbackDict, SessionMixin):
+
+    def __init__(self, initial=None, sid=None, new=False):
+        def on_update(self):
+            self.modified = True
+        CallbackDict.__init__(self, initial, on_update)
+        self.sid = sid
+        self.new = new
+        self.modified = False
+
+
+class RedisSessionInterface(SessionInterface):
+    serializer = pickle
+    session_class = RedisSession
+
+    def __init__(self, redis=None, prefix='session:'):
+        if redis is None:
+            redis = Redis()
+        self.redis = redis
+        self.prefix = prefix
+
+    def generate_sid(self):
+        return str(uuid4())
+
+    def get_redis_expiration_time(self, app, session):
+        if session.permanent:
+            return app.permanent_session_lifetime
+        return timedelta(days=1)
+
+    def open_session(self, app, request):
+        sid = request.cookies.get(app.session_cookie_name)
+        if not sid:
+            sid = self.generate_sid()
+            return self.session_class(sid=sid, new=True)
+        val = self.redis.get(self.prefix + sid)
+        if val is not None:
+            data = self.serializer.loads(val)
+            return self.session_class(data, sid=sid)
+        return self.session_class(sid=sid, new=True)
+
+    def save_session(self, app, session, response):
+        domain = self.get_cookie_domain(app)
+        if not session:
+            self.redis.delete(self.prefix + session.sid)
+            if session.modified:
+                response.delete_cookie(app.session_cookie_name,
+                                       domain=domain)
+            return
+        redis_exp = self.get_redis_expiration_time(app, session)
+        cookie_exp = self.get_expiration_time(app, session)
+        val = self.serializer.dumps(dict(session))
+        self.redis.setex(self.prefix + session.sid, val,
+                         int(redis_exp.total_seconds()))
+        response.set_cookie(app.session_cookie_name, session.sid,
+                            expires=cookie_exp, httponly=True,
+                            domain=domain)
+
+app.session_interface = RedisSessionInterface()
 
 def status(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    print(username)
     t = red.smembers("t:"+username)
     x = []
     at = list(t)
@@ -95,5 +153,6 @@ def rfetch(taskid, auth=auth):
         return r.text
     else:
         return "Not allowed"
+
 if __name__ == '__main__':
         app.run(host='0.0.0.0')
