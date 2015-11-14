@@ -10,10 +10,12 @@ from flask.ext.bcrypt import Bcrypt
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import CallbackDict
+from urllib.parse import urlparse
 from datetime import timedelta
 from uuid import uuid4
 from redis import Redis
 import redis
+import re
 
 users = {
     'admin': b'$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
@@ -122,6 +124,16 @@ def verify_pw(username, password):
         return False
     g.user = user
     return bcrypt.check_password_hash(users[username], password)
+
+@app.route('/dma/')
+@app.route('/dma')
+def dma():
+    URI=urlparse(url_for('.index', _external=True))
+    HOST=re.split(':', URI[1])[0]
+    if (HOST == "www.circl.lu") or (HOST == "circl.lu"):
+        return redirect('/dma/')
+    else:
+        return redirect('/')
 
 @app.route('/')
 @auth.login_required
