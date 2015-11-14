@@ -1,10 +1,15 @@
 #!/bin/bash
 
-cuckoo_api_url = "http://localhost:8090"
-cuckoo_api_tasks_create_file = "/tasks/create/file"
-cuckoo_api_tasks_view = "/tasks/view/"
+CUCKOO_API_URL="http://localhost:8090"
+CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"
+CUCKOO_API_TASKS_VIEW="/tasks/view/"
+CUCKOO_STATUS="/cuckoo/status"
+CUCKOO_VERSION=`curl -s ${CUCKOO_API_URL}${CUCKOO_STATUS} |jq -r .version`
+GPG_ENABLE=false
 
-submission_mail = "info@circl.lu"
+SUBMISSION_MAIL="steve.clement@circl.lu"
+
+echo "You run cuckoo version ${CUCKOO_VERSION}"
 
 while true
 do
@@ -22,14 +27,23 @@ do
         echo "file ${file}"
         echo "machine ${machine}"
         echo "package ${package}"
-        task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${cuckoo_api_url}${cuckoo_api_tasks_create_file} | jq -r .task_id`
+        # xargs is used to trim any leading spaces
+        if [ "$CUCKOO_VERSION" = "2.0-dev" ]; then
+            task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
+        fi
+        if [ "$CUCKOO_VERSION" = "1.3-Optiv" ]; then
+            task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
+        fi
         echo "task_id ${task_id}"
         status=$(redis-cli -n 5 SADD t:${user} ${task_id})
-        s=`curl ${cuckoo_api_url}${cuckoo_api_tasks_view}${task_id} >/tmp/c-$$`
-        fe=`gpg -e -o /tmp/e-$$.gpg -r ${submission_mail} ${file}`
-        smail=`mutt -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- ${submission_mail} </tmp/c-$$`
-        rm /tmp/e-$$.gpg
+        s=`curl ${CUCKOO_API_URL}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
+        if [ "$GPG_ENABLE" = true ]; then
+            fe=`gpg -e -o /tmp/e-$$.gpg -r ${SUBMISSION_MAIL} ${file}`
+            smail=`mutt -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- ${SUBMISSION_MAIL} </tmp/c-$$`
+            rm /tmp/e-$$.gpg
+        else
+            smail=`mutt -s "New DMA analysis submitted ${task_id} by ${user}" -- ${SUBMISSION_MAIL} < /tmp/c-$$`
+        fi
     done
     sleep 10
 done
-
