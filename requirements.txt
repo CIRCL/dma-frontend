@@ -1,3 +1,4 @@
+requests==2.7.0
 Flask==0.10.1
 Flask-Auth==0.85
 Flask-HTTPAuth==1.0.0
