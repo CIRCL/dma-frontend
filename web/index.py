@@ -5,7 +5,7 @@
 import os.path
 import requests, json, pickle
 from flask import Flask, render_template, url_for, request, g, redirect
-from flask.ext.httpauth import HTTPDigestAuth
+from flask_httpauth import HTTPBasicAuth
 from flask.ext.bcrypt import Bcrypt
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.utils import secure_filename
@@ -13,9 +13,10 @@ from werkzeug.datastructures import CallbackDict
 from datetime import timedelta
 from uuid import uuid4
 from redis import Redis
+import redis
 
 users = {
-    'admin': '$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
+    'admin': b'$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
 }
 
 # Allowed extensions to be uploaded
@@ -27,18 +28,20 @@ TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 MACHINES_LIST = "/machines/list"
 
+# Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///home/cuckoo/tmp/test.db'
 app.config['DEBUG'] = True
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
-app.config['SECRET_KEY'] = 'put your secret key'
 
-auth = HTTPDigestAuth()
+# Setup HTTP BasicAuth
+auth = HTTPBasicAuth()
+
+# Setup bcrypt
+bcrypt = Bcrypt(app)
 
 class RedisSession(CallbackDict, SessionMixin):
-
     def __init__(self, initial=None, sid=None, new=False):
         def on_update(self):
             self.modified = True
@@ -46,7 +49,6 @@ class RedisSession(CallbackDict, SessionMixin):
         self.sid = sid
         self.new = new
         self.modified = False
-
 
 class RedisSessionInterface(SessionInterface):
     serializer = pickle
@@ -103,7 +105,7 @@ def status(username, retmax=20):
     at = list(t)
     at = [a for a in at if a != 'null']
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
-        r = requests.get(BASE_URL+TASKS_VIEW+task)
+        r = requests.get(BASE_URL+TASKS_VIEW+task.decode('utf-8'))
         j = json.loads(r.text)
         x.append(j)
     return x
@@ -113,20 +115,13 @@ def machines():
     return json.loads(r.text)
 
 @auth.verify_password
-def verify_password(username, password):
+def verify_pw(username, password):
     if username in users:
         user = username
     else:
         return False
     g.user = user
-    return flask_bcrypt.check_password_hash(users[username], password)
-
-#@auth.get_password
-#def get_pw(username):
-#    if username in users:
-#        return users[username]
-#        return flask_bcrypt.check_password_hash(users[username], password)
-#    return None
+    return bcrypt.check_password_hash(users[username], password)
 
 @app.route('/')
 @auth.login_required
@@ -158,7 +153,7 @@ def upload():
 def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+auth.username())
-    if str(taskid) in t:
+    if str(taskid) in str(t):
         r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/html")
         return r.text
     else:
