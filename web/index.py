@@ -15,7 +15,7 @@ from uuid import uuid4
 from redis import Redis
 
 users = {
-    'admin': b'$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
+    'admin': '$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
 }
 
 # Allowed extensions to be uploaded
