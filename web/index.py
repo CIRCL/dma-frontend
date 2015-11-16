@@ -116,6 +116,18 @@ def machines():
     r = requests.get(BASE_URL+MACHINES_LIST)
     return json.loads(r.text)
 
+def checkURL():
+    if request.headers.get('X-Forwarded-Host'):
+        HOST=request.headers.get('X-Forwarded-Host')
+        WEB_PATH=request.headers.get('X-Script-Name')
+        PROTO=request.headers.get('X-Scheme')
+        URL=PROTO+"://"+HOST+WEB_PATH
+    else:
+        URI=urlparse(url_for('.index', _external=True))
+        HOST=re.split(':', URI[1])[0]
+        URL=URI[0]+"://"+URI[1] # http://crgb.circl.lu:5000
+    return URL
+
 @auth.verify_password
 def verify_pw(username, password):
     if username in users:
@@ -128,19 +140,26 @@ def verify_pw(username, password):
 @app.route('/dma/')
 @app.route('/dma')
 def dma():
-    URI=urlparse(url_for('.index', _external=True))
-    HOST=re.split(':', URI[1])[0]
     if (HOST == "www.circl.lu") or (HOST == "circl.lu"):
         return redirect('/dma/')
+    else:
+        return redirect('/')
+
+@app.route('/dmabeta/')
+@app.route('/dmabeta')
+def dmabeta():
+    if (HOST == "www.circl.lu") or (HOST == "circl.lu"):
+        return redirect('/dmabeta/')
     else:
         return redirect('/')
 
 @app.route('/')
 @auth.login_required
 def index():
+    URL = checkURL()
     s = status(auth.username())
     m = machines()
-    return render_template('main.html', auth=auth, s=s, machines=m)
+    return render_template('main.html', auth=auth, s=s, machines=m, urlPath=URL)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -149,6 +168,7 @@ def allowed_file(filename):
 @app.route('/upload', methods=['GET', 'POST'])
 @auth.login_required
 def upload():
+    URL = checkURL()
     s = status(auth.username())
     m = machines()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
@@ -158,7 +178,7 @@ def upload():
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
-    return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m)
+    return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m, urlPath=URL)
 
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
