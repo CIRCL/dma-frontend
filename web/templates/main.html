@@ -169,7 +169,11 @@
                             <tr class="success">
                         {% endif %}
                                 <td>
-                                    <a href="{{ urlPath }}/tasks/report/{{ t['task']['id'] }}"><img src="static/img/Pdf-Icon-fs8.png" style="height:24px;border:0"></a>
+                                {% if t['task']['status'] == 'reported' %}
+                                    <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}"><img src="static/img/Pdf-Icon-fs8.png" style="height:24px;border:0"></a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
                                 </td>
                                 <td>
                                 {% if t['task']['status'] == 'reported' %}

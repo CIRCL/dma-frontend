@@ -180,6 +180,17 @@ def upload():
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m, urlPath=URL)
 
+@app.route('/pfetch/<int:taskid>', methods=['GET'])
+@auth.login_required
+def rfetch(taskid, auth=auth):
+    red = redis.StrictRedis(host='localhost', port=6379, db=5)
+    t = red.smembers("t:"+auth.username())
+    if str(taskid) in str(t):
+        r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/pdf")
+        return r.text
+    else:
+        return "Not allowed"
+
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
 def rfetch(taskid, auth=auth):
