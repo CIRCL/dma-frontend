@@ -160,7 +160,7 @@
                 <div class="panel-heading">Status of uploaded sample</div>
                 <table class="table table-hover table-condensed btable tablehead">
                     <thead>
-                        <tr><th>Task id</th><th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
+                        <tr><th>PDF</th><th>Task id</th><th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
                     </thead>
                     {% for t in s %}
                         {% if t['task']['errors']|length > 0 %}
@@ -168,6 +168,9 @@
                         {% else %}
                             <tr class="success">
                         {% endif %}
+                                <td>
+                                    <a href="{{ urlPath }}/tasks/report/{{ t['task']['id'] }}"><img src="static/img/Pdf-Icon-fs8.png" style="height:24px;border:0"></a>
+                                </td>
                                 <td>
                                 {% if t['task']['status'] == 'reported' %}
                                     <a href="{{ urlPath }}/rfetch/{{ t['task']['id'] }}">{{ t['task']['id'] }}</a>
