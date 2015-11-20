@@ -182,12 +182,12 @@ def upload():
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
-def rfetch(taskid, auth=auth):
+def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+auth.username())
     if str(taskid) in str(t):
         r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/pdf")
-        return r.text
+        return Response(r.texr, mimetype='application/pdf')
     else:
         return "Not allowed"
 
