@@ -4,7 +4,7 @@
 
 import os.path
 import requests, json, pickle
-from flask import Flask, render_template, url_for, request, g, redirect
+from flask import Flask, Response, render_template, url_for, request, g, redirect
 from flask_httpauth import HTTPBasicAuth
 from flask.ext.bcrypt import Bcrypt
 from flask.sessions import SessionInterface, SessionMixin
