@@ -187,7 +187,7 @@ def pfetch(taskid, auth=auth):
     t = red.smembers("t:"+auth.username())
     if str(taskid) in str(t):
         r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/pdf")
-        return Response(r.texr, mimetype='application/pdf')
+        return Response(r.text, mimetype='application/pdf')
     else:
         return "Not allowed"
 
