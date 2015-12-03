@@ -2,7 +2,6 @@
 
 ## Requirements
 
-
 ### submit.sh
 
 - redis-cli
@@ -32,4 +31,4 @@ sudo pip3 install -r requirements.txt
 
 ### Mailer
 
-Make sure you have a mailer setup otherwise you will obvisouly not be able to receive reports
+Make sure you have a mailer setup otherwise you will obviously not be able to receive reports
