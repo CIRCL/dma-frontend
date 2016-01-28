@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-import os.path
+import os.path, sys
 import requests, json, pickle
 from flask import Flask, Response, render_template, url_for, request, g, redirect
 from flask_httpauth import HTTPBasicAuth
@@ -17,9 +17,10 @@ from redis import Redis
 import redis
 import re
 
-users = {
-    'admin': b'$2b$12$d5zxYbIZWvoVepPWRHnI8uiYbPeJbxDG5ESVrj/APYM/0xAii3PRG',
-}
+try:
+  import DMAusers
+except ImportError:
+  sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
 # Allowed extensions to be uploaded
 ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
