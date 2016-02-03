@@ -18,7 +18,7 @@ import redis
 import re
 
 try:
-  import DMAusers
+  from DMAusers import *
 except ImportError:
   sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
@@ -29,6 +29,7 @@ ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'j
 BASE_URL = "http://localhost:8090"
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
+CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
 
 # Setup Flask
@@ -117,6 +118,10 @@ def machines():
     r = requests.get(BASE_URL+MACHINES_LIST)
     return json.loads(r.text)
 
+def cuckooStatus():
+    r = requests.get(BASE_URL+CUCKOO_STATUS)
+    return json.loads(r.text)
+
 def checkURL():
     if request.headers.get('X-Forwarded-Host'):
         HOST=request.headers.get('X-Forwarded-Host')
@@ -158,9 +163,11 @@ def dmabeta():
 @auth.login_required
 def index():
     URL = checkURL()
+    username = auth.username()
     s = status(auth.username())
     m = machines()
-    return render_template('main.html', auth=auth, s=s, machines=m, urlPath=URL)
+    cs = cuckooStatus()
+    return render_template('main.html', auth=auth, s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -172,6 +179,7 @@ def upload():
     URL = checkURL()
     s = status(auth.username())
     m = machines()
+    cs = cuckooStatus()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
         if f and allowed_file(f.filename):
@@ -179,7 +187,7 @@ def upload():
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
-    return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m, urlPath=URL)
+    return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m, urlPath=URL, cuckooStatus=cs)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
