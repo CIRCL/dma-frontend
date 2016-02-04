@@ -182,8 +182,8 @@
                         <tr><th>PDF</th><th>Task id</th><th>Submitter</th><th>cuckoo flavour<th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
                     </thead>
 
-                        <!-- Set the row colour to red or green-->
                     {% for t in s %}
+                        <!-- Set the row colour to red or green-->
                         {% if t['task']['errors']|length > 0 %}
                             <tr class="error">
                         {% else %}
@@ -193,7 +193,7 @@
                                 <!-- PDF -->
                                 <td>
                                 {% if t['task']['status'] == 'reported' %}
-                                    <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}"><img src="static/img/Pdf-Icon-fs8.png" style="height:40px;border:0"></a>
+                                    <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}" target="_blank"><img src="static/img/Pdf-Icon-fs8.png" style="height:40px;border:0"></a>
                                 {% else %}
                                     N/A
                                 {% endif %}
@@ -201,7 +201,7 @@
                                 <!-- Task id -->
                                 <td>
                                 {% if t['task']['status'] == 'reported' %}
-                                    <a href="{{ urlPath }}/rfetch/{{ t['task']['id'] }}">{{ t['task']['id'] }}</a>
+                                    <a href="{{ urlPath }}/rfetch/{{ t['task']['id'] }}" target="_blank">{{ t['task']['id'] }}</a>
                                 {% else %}
                                     {{ t['task']['id'] }}
                                 {% endif %}
@@ -210,7 +210,9 @@
                                 <td>{{ user }}</td>
                                 <!-- cuckoo flavour -->
                                 {% if cuckooStatus['version'] == '1.3-Optiv' %}
-                                    <td>modified v1.3</td>
+                                    <td>modified<br />Optiv v1.3</td>
+                                {% elif cuckooStatus['version'] == '1.3-NG' %}
+                                    <td>modified<br />Spender v1.3</td>
                                 {% else %}
                                     <td>vanilla v2.0-HEAD</td>
                                 {% endif %}
