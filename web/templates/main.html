@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="">
   <meta name="author" content="">
+  <meta http-equiv="refresh" content="13;url={{ urlPath }}" >
+
 
     <!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
     <!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
@@ -66,7 +68,7 @@
                         <div class="nav-collapse collapse navbar-responsive-collapse">
                             <ul class="nav pull-right">
                                 <li> </li>
-                                <li>Logged as <b>{{ auth.username }}</b></li>
+                                <li>Logged as <b>{{ user }}</b></li>
                                 <li class="divider-vertical"> </li>
                             </ul>
                         </div>
@@ -144,7 +146,7 @@
         <div class="hero-unit">
             <div class="panel panel-primary panel-default">
                 <div class="col-lg-10">
-                    <select class="form-control selectpicker" name="package">
+                    <select class="form-control selectpicker" name="retmax">
                         <option>10</option>
                         <option selected>20</option>
                         <option>30</option>

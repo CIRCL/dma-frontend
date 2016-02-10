@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-import os.path, sys
+import os.path, sys, time, random
 import requests, json, pickle
 from flask import Flask, Response, render_template, url_for, request, g, redirect
 from flask_httpauth import HTTPBasicAuth
@@ -11,11 +11,18 @@ from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import CallbackDict
 from urllib.parse import urlparse
-from datetime import timedelta
+from datetime import timedelta, datetime
 from uuid import uuid4
 from redis import Redis
 import redis
 import re
+
+try:
+    import xkcd
+    XKCD = True
+except ImportError:
+    print("Disabling XKCD support, some unicorns are crying right now, some where :'(")
+    XKCD = False
 
 try:
   from DMAusers import *
@@ -26,6 +33,8 @@ except ImportError:
 ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
 
 # Configurables
+MAINTENANCE  = True
+DEBUG = True
 BASE_URL = "http://localhost:8090"
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
@@ -35,7 +44,10 @@ MACHINES_LIST = "/machines/list"
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
-app.config['DEBUG'] = True
+if DEBUG:
+    app.config['DEBUG'] = True
+else:
+    app.config['DEBUG'] = False
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
@@ -102,6 +114,20 @@ class RedisSessionInterface(SessionInterface):
 
 app.session_interface = RedisSessionInterface()
 
+def getTime(seconds):
+    sec = timedelta(seconds=int(seconds))
+    d = datetime(1,1,1) + sec
+
+#    print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
+    if d.day-1 > 0:
+        return("{} day(s), {} hour(s), {} minute(s) and {} seconds".format(d.day-1, d.hour, d.minute, d.second))
+    elif d.hour > 0:
+        return("{} hour(s), {} minute(s) and {} seconds".format(d.hour, d.minute, d.second))
+    elif d.minute > 0:
+        return("{} minute(s) and {} seconds".format(d.minute, d.second))
+    else:
+        return("{} seconds".format(d.second))
+
 def status(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+username)
@@ -162,12 +188,38 @@ def dmabeta():
 @app.route('/')
 @auth.login_required
 def index():
+    if MAINTENANCE:
+        chkTime = os.path.getmtime('static/img/online_communities.png')
+        mt = getTime(time.time() - chkTime)
+        URL = checkURL()
+        username = auth.username()
+        cs = cuckooStatus()
+        if XKCD:
+            try:
+                maintenanceXKCD = xkcd.getRandomComic()
+                xkcdLink = maintenanceXKCD.getAsciiImageLink()
+            except:
+                offlineComic = (b"static/img/online_communities.png", b"static/img/duty_calls.png")
+                xkcdLink = offlineComic[random.randint(0,len(offlineComic))]
+            return render_template('maintenance.html', user=username, urlPath=URL, cuckooStatus=cs, xkcd=xkcdLink.decode('ascii'), maintenanceTime=mt)
+        else:
+            return render_template('maintenance.html', user=username, urlPath=URL, cuckooStatus=cs, maintenanceTime=mt)
+    else:
+        with open('static/img/online_communities.png', 'a'):
+            os.utime('static/img/online_communities.png', None)
+
     URL = checkURL()
     username = auth.username()
-    s = status(auth.username())
+    #if request.form['retmax']:
+    #    s = status(auth.username(), retmax=request.form['retmax'])
+    #else:
+    if request.method == 'GET':
+        s = status(auth.username())
+    else:
+        s = status(auth.username(), retmax=request.form['retmax'])
     m = machines()
     cs = cuckooStatus()
-    return render_template('main.html', auth=auth, s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
+    return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -187,7 +239,7 @@ def upload():
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
-    return render_template('main.html', auth=auth, upload=request.files['sample'], s=s, machines=m, urlPath=URL, cuckooStatus=cs)
+    return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required

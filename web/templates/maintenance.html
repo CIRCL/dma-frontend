@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>/!\ CIRCL - DMA - Dynamic Malware Analysis - maitenance /!\</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Maintenance page to ease the wait">
+  <meta name="author" content="CIRCL">
+  <meta http-equiv="refresh" content="60;url={{ urlPath }}" >
+
+    <!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
+    <!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
+    <!--script src="js/less-1.3.3.min.js"></script-->
+    <!--append ‘#!watch’ to the browser URL, then refresh the page. -->
+
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="static/css/style.css" rel="stylesheet">
+    <link href="static/css/tablecloth.css" rel="stylesheet">
+    <link href="static/css/prettify.css" rel="stylesheet">
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+        <script src="js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="static/img/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="static/img/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="static/img/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="static/img/apple-touch-icon-57-precomposed.png">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script type="text/javascript" src="static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="static/js/scripts.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap-select.js"></script>
+    <script src="static/js/jquery.metadata.js"></script>
+    <script src="static/js/jquery.tablesorter.min.js"></script>
+    <script src="static/js/jquery.tablecloth.js"></script>
+
+    <link href="static/css/bootstrap-select.css" rel="stylesheet">
+        <script type="text/javascript">
+            $(document).ready(function(e) {
+                $('.selectpicker').selectpicker();
+            });
+        </script>
+        <script type="text/javascript" charset="utf-8">
+            $(document).ready(function() {
+                $("table").tablecloth({
+                    sortable: true,
+                    condensed: true,
+                    striped: true,
+                    bordered: true
+                });
+            });
+    </script>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="navbar">
+                <div class="navbar-inner">
+                    <div class="container-fluid">
+                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="{{ urlPath }}" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a>
+                        <div class="nav-collapse collapse navbar-responsive-collapse">
+                            <ul class="nav pull-right">
+                                <li> </li>
+                                <li>Logged as <b>{{ user }}</b></li>
+                                <li class="divider-vertical"> </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-unit">
+                <p class="lead">
+                Dear user {{ user }},
+                Currently we are maintaining the DMA Interface to implement more awesomeness, or squash some vegan bugs.
+                </p>
+            <div class="panel panel-primary panel-default">
+                <div class="panel-heading">Malicious sample upload interface is in maintenance mode since {{ maintenanceTime }}</div>
+                <div class="panel-body">
+                <a href="{{ xkcd }}" target="_blank"><img src={{ xkcd }} ></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
