@@ -33,7 +33,7 @@ except ImportError:
 ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
 
 # Configurables
-MAINTENANCE  = True
+MAINTENANCE  = False
 DEBUG = True
 BASE_URL = "http://localhost:8090"
 TASKS_VIEW = "/tasks/view/"
@@ -232,6 +232,7 @@ def upload():
     s = status(auth.username())
     m = machines()
     cs = cuckooStatus()
+    username = auth.username()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
         if f and allowed_file(f.filename):
