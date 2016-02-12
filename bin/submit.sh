@@ -47,33 +47,28 @@ do
         file=`echo "${VAL}" |  cut -f2 -d:`
         machine=`echo "${VAL}" |  cut -f3 -d:`
         package=`echo "${VAL}" |  cut -f4 -d:`
-        echo "username ${user}"
-        echo "file ${file}"
-        echo "machine ${machine}"
-        echo "package ${package}"
-        if [ "${CUCKOO_COUNT}" = "1" ]; then
+        echo "username              : ${user}"
+        echo "file                  : ${file}"
+        echo "machine               : ${machine}"
+        echo "package               : ${package}"
+        echo "# of cuckoo instances : ${CUCKOO_COUNT}"
+        if [ ${CUCKOO_COUNT} -eq 1 ]; then
             # xargs is used to trim any leading spaces
-            if [ "$CUCKOO_VERSION" = "2.0-dev" ]; then
-                task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
+            if [ "$CUCKOO_VERSION" == "2.0-dev" ]; then
+                task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[0]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
                 status=$(redis-cli -n 5 SADD t:${user}:HEAD ${task_id})
-                #submitAdmin()
-                for adminUser in ${ADMINS}
-                do
-                    if [ "${user}" != "$adminUser" ]; then
-                        redis-cli -n 5 SADD t:${adminUser} ${task_id}
-                    fi
-                done
-            #elif [ "$CUCKOO_VERSION" = "1.3-Optiv" ] || [ "$CUCKOO_VERSION" = "1.3-NG" ]; then
-            #    task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
-            #    status=$(redis-cli -n 5 SADD t:${user}:modified ${task_id})
-            #    submitAdmin()
+                submitAdmin
+            elif [ "$CUCKOO_VERSION" = "1.3-Optiv" ] || [ "$CUCKOO_VERSION" = "1.3-NG" ]; then
+                task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[0]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
+                status=$(redis-cli -n 5 SADD t:${user}:modified ${task_id})
+                submitAdmin
             fi
-        #else
-        #    echo "Please implement me :)"
+        else
+            echo "Please implement me :)"
         fi
         echo "task_id ${task_id}"
         status=$(redis-cli -n 5 SADD t:${user} ${task_id})
-        s=`curl ${CUCKOO_API_URL}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
+        s=`curl ${CUCKOO_API_URL[0]}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
         if [ "$GPG_ENABLE" = true ]; then
             fe=`gpg -e -o /tmp/e-$$.gpg -r ${SUBMISSION_MAIL} ${file}`
             smail=`mutt -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- ${SUBMISSION_MAIL} </tmp/c-$$`
