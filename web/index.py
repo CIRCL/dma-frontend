@@ -129,7 +129,17 @@ def getTime(seconds):
 
 def status(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+username)
+    k = red.keys()
+    if len(k) > 1:
+        for e in k:
+            # Create dictionary with index HEAD/modified
+            try:
+                flavour = str(e).split(':')[2][:-1]
+                tasks = { flavour : t}
+            except IndexError:
+                gotdata = 'null'
+    else:
+        t = red.smembers("t:"+username)
     x = []
     at = list(t)
     at = [a for a in at if a != 'null']
