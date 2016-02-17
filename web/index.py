@@ -147,7 +147,7 @@ def status(username, retmax=20):
     x = []
     at = list(t)
     print(at)
-    at = [a for a in at if a != 'null']
+    at = [a for a in at if a != b'null']
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
         r = requests.get(BASE_URL+TASKS_VIEW+task.decode('utf-8'))
         if r.status_code == requests.codes.ok:
