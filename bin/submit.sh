@@ -7,6 +7,8 @@ CUCKOO_API_TASKS_VIEW="/tasks/view/"
 CUCKOO_STATUS="/cuckoo/status"
 CUCKOO_VERSION=`curl -s ${CUCKOO_API_URL[0]}${CUCKOO_STATUS} |jq -r .version`
 CUCKOO_COUNT=`echo ${#CUCKOO_API_URL[@]}`
+echo -n "Checking for redis-cli (wants to be in \$PATH) will do exit 1 if not found. "
+REDISCLI=`which redis-cli` && echo "Got redis-cli continuing…" || exit 1
 
 GPG_ENABLE=false
 
@@ -20,7 +22,7 @@ function submitAdmin()
     for adminUser in ${ADMINS}
     do
         if [ "${user}" != "$adminUser" ]; then
-            redis-cli -n 5 SADD t:${adminUser} ${task_id}
+            $REDISCLI -n 5 SADD t:${adminUser} ${task_id}
         fi
     done
 }
@@ -35,14 +37,14 @@ fi
 
 while true
 do
-    LISTSIZE=$(redis-cli -n 5 LLEN submit)
+    LISTSIZE=$($REDISCLI -n 5 LLEN submit)
     START=0
     if [ "${LISTSIZE}" != 0 ]; then
         echo ${LISTSIZE}
     fi
     for (( c=1; c<=$LISTSIZE; c++ ))
     do
-        VAL=$(redis-cli -n 5 LPOP submit)
+        VAL=$($REDISCLI -n 5 LPOP submit)
         user=`echo "${VAL}" |  cut -f1 -d:`
         file=`echo "${VAL}" |  cut -f2 -d:`
         machine=`echo "${VAL}" |  cut -f3 -d:`
@@ -57,16 +59,16 @@ do
         # xargs is used to trim any leading spaces
         if [ "$CUCKOO_VERSION" == "2.0-dev" ]; then
             task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
-            status=$(redis-cli -n 5 SADD t:${user}:HEAD ${task_id})
+            status=$($REDISCLI -n 5 SADD t:${user}:HEAD ${task_id})
             submitAdmin
         elif [ "$CUCKOO_VERSION" = "1.3-Optiv" ] || [ "$CUCKOO_VERSION" = "1.3-NG" ]; then
             task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
-            status=$(redis-cli -n 5 SADD t:${user}:modified ${task_id})
+            status=$($REDISCLI -n 5 SADD t:${user}:modified ${task_id})
             submitAdmin
         fi
         done
         echo "task_id ${task_id}"
-        status=$(redis-cli -n 5 SADD t:${user} ${task_id})
+        status=$($REDISCLI -n 5 SADD t:${user} ${task_id})
         s=`curl ${CUCKOO_API_URL[0]}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
         if [ "$GPG_ENABLE" = true ]; then
             fe=`gpg -e -o /tmp/e-$$.gpg -r ${SUBMISSION_MAIL} ${file}`
