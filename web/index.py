@@ -118,7 +118,6 @@ def getTime(seconds):
     sec = timedelta(seconds=int(seconds))
     d = datetime(1,1,1) + sec
 
-#    print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
     if d.day-1 > 0:
         return("{} day(s), {} hour(s), {} minute(s) and {} seconds".format(d.day-1, d.hour, d.minute, d.second))
     elif d.hour > 0:
@@ -136,9 +135,14 @@ def status(username, retmax=20):
     at = [a for a in at if a != 'null']
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
         r = requests.get(BASE_URL+TASKS_VIEW+task.decode('utf-8'))
-        j = json.loads(r.text)
-        x.append(j)
-    return x
+        if r.status_code == requests.codes.ok:
+            j = json.loads(r.text)
+            x.append(j)
+            print("value of x: {} type of x: {}".format(str(x), str(type(x))))
+            return x
+        else:
+            return False
+
 
 def machines():
     r = requests.get(BASE_URL+MACHINES_LIST)
@@ -210,7 +214,8 @@ def index():
 
     URL = checkURL()
     username = auth.username()
-    #if request.form['retmax']:
+    if request.form['retmax']:
+        print("Form send us retmax: {}".format(str(retmax)))
     #    s = status(auth.username(), retmax=request.form['retmax'])
     #else:
     if request.method == 'GET':
