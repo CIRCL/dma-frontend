@@ -128,13 +128,17 @@ def getTime(seconds):
         return("{} seconds".format(d.second))
 
 def status(username, retmax=20):
+    tasks = {}
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
     if len(k) > 1:
+        t = red.smembers("t:"+username)
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
-                flavour = str(e).split(':')[2][:-1]
+                flavour = e.decode('utf-8').split(':')[2]
+                if not tasks.get(flavour):
+                    tasks = { flavour : [] }
                 tasks = { flavour : t}
             except IndexError:
                 gotdata = 'null'
@@ -142,17 +146,18 @@ def status(username, retmax=20):
         t = red.smembers("t:"+username)
     x = []
     at = list(t)
+    print(at)
     at = [a for a in at if a != 'null']
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
         r = requests.get(BASE_URL+TASKS_VIEW+task.decode('utf-8'))
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
             x.append(j)
-            print("value of x: {} type of x: {}".format(str(x), str(type(x))))
             return x
         else:
-            return False
-
+            # Some times we get a bad response and need to handle it. This also serves as place-debug-holder to see what is include in the variable 'x'
+            x = [{'task': {'guest': {'id': 42, 'name': 'Windows_reload', 'label': 'Windows_reload', 'task_id': 42, 'manager': 'VirtualBox', 'shutdown_on': '2016-02-13 00:36:16', 'started_on': '2016-02-13 00:33:56'}, 'target': '/tmp/cuckoo-tmp/upload_S6wOsp/calc.exe', 'priority': 1, 'sample_id': 19, 'shrike_refer': None, 'status': 'reported', 'anti_issues': None, 'processing_finished_on': None, 'signatures_started_on': None, 'signatures_finished_on': None, 'shrike_msg': None, 'custom': '', 'signatures_total': None, 'analysis_started_on': None, 'completed_on': '2016-02-13 00:36:16', 'dropped_files': None, 'options': '', 'reporting_started_on': None, 'package': 'exe', 'parent_id': None, 'enforce_timeout': False, 'clock': '2015-10-16 00:33:55', 'tags': [], 'machine_id': None, 'registry_keys_modified': None, 'timeout': 0, 'domains': None, 'platform': '', 'machine': 'Windows_7_ent_sp1_x86_en', 'processing_started_on': None, 'added_on': '2016-02-13 00:33:55', 'timedout': False, 'analysis_finished_on': None, 'errors': [], 'category': 'file', 'started_on': '2016-02-13 00:33:56', 'shrike_url': None, 'files_written': None, 'signatures_alert': None, 'reporting_finished_on': None, 'running_processes': None, 'api_calls': None, 'sample': {'md5': 'e9cc8c20b0e682c77b97e6787de16e5d', 'file_type': 'PE32 executable (GUI) Intel 80386, for MS Windows', 'sha256': 'ef854d21cbf297ee267f22049b773ffeb4c1ff1a3e55227cc2a260754699d644', 'crc32': '03C45201', 'sha512': '1a3b9b2d16a4404b29675ab1132ad542840058fd356e0f145afe5d0c1d9e1653de28314cd24406b85f09a9ec874c4339967d9e7acb327065448096c5734502c7', 'file_size': 115200, 'id': 42, 'ssdeep': '1536:Zl14rQcWAkN7GAlqbkfAGQGV8aMbrNyrf1w+noPvaeBsCXK15Zr6O:7mZWXyaiedMbrN6pnoXPBsr5ZrR', 'sha1': '8be674dec4fcf14ae853a5c20a9288bff3e0520a'}, 'id': 42, 'shrike_sid': None, 'memory': False, 'crash_issues': None}}]
+            return x
 
 def machines():
     r = requests.get(BASE_URL+MACHINES_LIST)
@@ -224,8 +229,8 @@ def index():
 
     URL = checkURL()
     username = auth.username()
-    if request.form['retmax']:
-        print("Form send us retmax: {}".format(str(retmax)))
+    #if request.form['retmax']:
+    #    print("Form send us retmax: {}".format(str(retmax)))
     #    s = status(auth.username(), retmax=request.form['retmax'])
     #else:
     if request.method == 'GET':
