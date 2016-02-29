@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUCKOO_API_URL=("http://localhost:8090" "http://crg:8090")
+CUCKOO_API_URL=("http://crgb:8090" "http://crg:8090")
 CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"
 CUCKOO_API_TASKS_VIEW="/tasks/view/"
 CUCKOO_STATUS="/cuckoo/status"
@@ -41,6 +41,7 @@ function submitMail()
 
 function checkAPI()
 {
+    /bin/sleep 1
     echo "# of cuckoo instances : ${CUCKOO_COUNT}"
     for (( i=0; i<${CUCKOO_COUNT}; i++ ));
     do

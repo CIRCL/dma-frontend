@@ -34,13 +34,14 @@ except ImportError:
 ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
 
 # Configurables
-MAINTENANCE  = True
+MAINTENANCE  = False
 DEBUG = True
-BASE_URL = [ "http://localhost:8090", "http://crg.circl.lu:8090" ]
+BASE_URL = [ "http://crgb.circl.lu:8090", "http://crg.circl.lu:8090" ]
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
+ADMINS = [ "circl" ]
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -49,6 +50,7 @@ if DEBUG:
     app.config['DEBUG'] = True
 else:
     app.config['DEBUG'] = False
+
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
@@ -151,8 +153,6 @@ def status(username, retmax=20):
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
         r = requests.get(BASE_URL[0]+TASKS_VIEW+task.decode('utf-8'))
-        j = json.loads(r.text)
-        x.append(j)
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
             x.append(j)
@@ -213,10 +213,17 @@ def dmabeta():
     else:
         return redirect('/')
 
-@app.route('/dma/sylph')
+@app.route('/sylph')
 @auth.login_required
 def sylph():
-    return render_template('sylph.html')
+    username = auth.username()
+    cs = cuckooStatus()
+    URL = checkURL()
+    if username in ADMINS:
+        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs)
+    else:
+        e="Permission denied!"
+        return render_template('iamerror.html', e=e)
 
 @app.route('/')
 @auth.login_required
@@ -257,6 +264,7 @@ def index():
     else:
         s = status(auth.username(), retmax=request.form['retmax'])
     m = machines()
+    print(s)
     cs = cuckooStatus()
     return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
