@@ -4,6 +4,7 @@
 
 import os.path, sys, time, random
 import requests, json, pickle
+import hashlib
 from flask import Flask, Response, render_template, url_for, request, g, redirect
 from flask_httpauth import HTTPBasicAuth
 from flask.ext.bcrypt import Bcrypt
@@ -35,11 +36,12 @@ ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'j
 # Configurables
 MAINTENANCE  = False
 DEBUG = True
-BASE_URL = "http://localhost:8090"
+BASE_URL = [ "http://crgb.circl.lu:8090", "http://crg.circl.lu:8090" ]
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
+ADMINS = [ "circl" ]
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -48,6 +50,7 @@ if DEBUG:
     app.config['DEBUG'] = True
 else:
     app.config['DEBUG'] = False
+
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
@@ -146,26 +149,32 @@ def status(username, retmax=20):
         t = red.smembers("t:"+username)
     x = []
     at = list(t)
-    print(at)
     at = [a for a in at if a != b'null']
     for task in sorted(at, key=lambda x: float(x), reverse=True)[:retmax]:
-        r = requests.get(BASE_URL+TASKS_VIEW+task.decode('utf-8'))
+        ## IMPLEMENT MULTI INSTANCE
+        r = requests.get(BASE_URL[0]+TASKS_VIEW+task.decode('utf-8'))
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
             x.append(j)
-            return x
         else:
             # Some times we get a bad response and need to handle it. This also serves as place-debug-holder to see what is include in the variable 'x'
             x = [{'task': {'guest': {'id': 42, 'name': 'Windows_reload', 'label': 'Windows_reload', 'task_id': 42, 'manager': 'VirtualBox', 'shutdown_on': '2016-02-13 00:36:16', 'started_on': '2016-02-13 00:33:56'}, 'target': '/tmp/cuckoo-tmp/upload_S6wOsp/calc.exe', 'priority': 1, 'sample_id': 19, 'shrike_refer': None, 'status': 'reported', 'anti_issues': None, 'processing_finished_on': None, 'signatures_started_on': None, 'signatures_finished_on': None, 'shrike_msg': None, 'custom': '', 'signatures_total': None, 'analysis_started_on': None, 'completed_on': '2016-02-13 00:36:16', 'dropped_files': None, 'options': '', 'reporting_started_on': None, 'package': 'exe', 'parent_id': None, 'enforce_timeout': False, 'clock': '2015-10-16 00:33:55', 'tags': [], 'machine_id': None, 'registry_keys_modified': None, 'timeout': 0, 'domains': None, 'platform': '', 'machine': 'Windows_7_ent_sp1_x86_en', 'processing_started_on': None, 'added_on': '2016-02-13 00:33:55', 'timedout': False, 'analysis_finished_on': None, 'errors': [], 'category': 'file', 'started_on': '2016-02-13 00:33:56', 'shrike_url': None, 'files_written': None, 'signatures_alert': None, 'reporting_finished_on': None, 'running_processes': None, 'api_calls': None, 'sample': {'md5': 'e9cc8c20b0e682c77b97e6787de16e5d', 'file_type': 'PE32 executable (GUI) Intel 80386, for MS Windows', 'sha256': 'ef854d21cbf297ee267f22049b773ffeb4c1ff1a3e55227cc2a260754699d644', 'crc32': '03C45201', 'sha512': '1a3b9b2d16a4404b29675ab1132ad542840058fd356e0f145afe5d0c1d9e1653de28314cd24406b85f09a9ec874c4339967d9e7acb327065448096c5734502c7', 'file_size': 115200, 'id': 42, 'ssdeep': '1536:Zl14rQcWAkN7GAlqbkfAGQGV8aMbrNyrf1w+noPvaeBsCXK15Zr6O:7mZWXyaiedMbrN6pnoXPBsr5ZrR', 'sha1': '8be674dec4fcf14ae853a5c20a9288bff3e0520a'}, 'id': 42, 'shrike_sid': None, 'memory': False, 'crash_issues': None}}]
-            return x
+    return x
 
 def machines():
-    r = requests.get(BASE_URL+MACHINES_LIST)
+    ## IMPLEMENT MULTI INSTANCE
+    r = requests.get(BASE_URL[0]+MACHINES_LIST)
     return json.loads(r.text)
 
 def cuckooStatus():
-    r = requests.get(BASE_URL+CUCKOO_STATUS)
-    return json.loads(r.text)
+    ## IMPLEMENT MULTI INSTANCE
+    try:
+        r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
+        return json.loads(r.text)
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return render_template('iamerror.html')
+
 
 def checkURL():
     if request.headers.get('X-Forwarded-Host'):
@@ -204,9 +213,26 @@ def dmabeta():
     else:
         return redirect('/')
 
+@app.route('/sylph')
+@auth.login_required
+def sylph():
+    username = auth.username()
+    cs = cuckooStatus()
+    URL = checkURL()
+    if username in ADMINS:
+        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs)
+    else:
+        e="Permission denied!"
+        return render_template('iamerror.html', e=e)
+
 @app.route('/')
 @auth.login_required
 def index():
+    try:
+        r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
+    except requests.exceptions.RequestException as e:
+        return render_template('iamerror.html', e=e)
+
     if MAINTENANCE:
         chkTime = os.path.getmtime('static/img/online_communities.png')
         mt = getTime(time.time() - chkTime)
@@ -238,6 +264,7 @@ def index():
     else:
         s = status(auth.username(), retmax=request.form['retmax'])
     m = machines()
+    print(s)
     cs = cuckooStatus()
     return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
@@ -256,10 +283,14 @@ def upload():
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
         if f and allowed_file(f.filename):
+            fExtension = f.filename.rsplit('.', 1)[1]
+            fSum = hashlib(f.filename.rsplit('.', 1)[0]).hexdigest()
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
+        print("Submitting: {}".format(str(sfname)))
+        print(auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
@@ -268,7 +299,8 @@ def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+auth.username())
     if str(taskid) in str(t):
-        r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/pdf")
+        ## IMPLEMENT MULTI INSTANCE
+        r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/pdf")
         return Response(r.content, mimetype='application/pdf')
     else:
         return "Not allowed"
@@ -279,7 +311,8 @@ def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+auth.username())
     if str(taskid) in str(t):
-        r = requests.get(BASE_URL+TASKS_REPORT+str(taskid)+"/html")
+        ## IMPLEMENT MULTI INSTANCE
+        r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
         return r.text
     else:
         return "Not allowed"

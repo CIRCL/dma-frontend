@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>/!\ CIRCL - DMA - Dynamic Malware Analysis - maintenance /!\</title>
+  <title>/!\ CIRCL - DMA - Dynamic Malware Analysis - ERROR /!\</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Maintenance page to ease the wait">
   <meta name="author" content="CIRCL">
-  <meta http-equiv="refresh" content="60;url={{ urlPath }}" >
 
     <!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
     <!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
@@ -55,7 +54,7 @@
     </script>
 </head>
 
-<body>
+<body background="static/img/iamerror.jpg">
 
 <div class="container-fluid">
     <div class="row-fluid">
@@ -63,11 +62,11 @@
             <div class="navbar">
                 <div class="navbar-inner">
                     <div class="container-fluid">
-                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="{{ urlPath }}" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a>
+                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a>
                         <div class="nav-collapse collapse navbar-responsive-collapse">
                             <ul class="nav pull-right">
                                 <li> </li>
-                                <li>Logged as <b>{{ user }}</b></li>
+                                <li>Logged as <b></b></li>
                                 <li class="divider-vertical"> </li>
                             </ul>
                         </div>
@@ -77,13 +76,13 @@
 
             <div class="hero-unit">
                 <p class="lead">
-                Dear user {{ user }},
+                Dear user,
                 Currently we are maintaining the DMA Interface to implement more awesomeness, or squash some vegan bugs.
                 </p>
             <div class="panel panel-primary panel-default">
-                <div class="panel-heading">Malicious sample upload interface is in maintenance mode since {{ maintenanceTime }}</div>
+                <div class="panel-heading">Malicious sample upload interface is temporarily ERROR</div>
                 <div class="panel-body">
-                <a href="{{ xkcd }}" target="_blank"><img src={{ xkcd }} ></a>
+                {{ e }}
                 </div>
             </div>
         </div>
