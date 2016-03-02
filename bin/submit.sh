@@ -28,7 +28,7 @@ function submitAdmin()
 
 function submitMail()
 {
-    s=`curl ${CUCKOO_API_URL[$1]}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
+    s=`curl ${CUCKOO_API_URL[$i]}${CUCKOO_API_TASKS_VIEW}${task_id} >/tmp/c-$$`
     if [ "$GPG_ENABLE" = true ]; then
         fe=`gpg -e -o /tmp/e-$$.gpg -r ${SUBMISSION_MAIL} ${file}`
         smail=`$MUTTCMD -a /tmp/e-$$.gpg -s "New DMA analysis submitted ${task_id} by ${user}" -- ${SUBMISSION_MAIL} </tmp/c-$$`
@@ -81,6 +81,7 @@ do
         echo "# of cuckoo instances : ${CUCKOO_COUNT}"
         for (( i=0; i<${CUCKOO_COUNT}; i++ ));
         do
+        CUCKOO_VERSION=`curl -s ${CUCKOO_API_URL[i]}${CUCKOO_STATUS} |jq -r .version`
         # xargs is used to trim any leading spaces
         if [ "$CUCKOO_VERSION" == "2.0-dev" ]; then
             task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`

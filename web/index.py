@@ -54,6 +54,7 @@ else:
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
+
 # Setup HTTP BasicAuth
 auth = HTTPBasicAuth()
 
@@ -135,7 +136,7 @@ def status(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
     if len(k) > 1:
-        t = red.smembers("t:"+username)
+        t = red.smembers("t:"+username+":modified")
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -219,11 +220,12 @@ def sylph():
     username = auth.username()
     cs = cuckooStatus()
     URL = checkURL()
+    s = status(auth.username(), retmax=3)
     if username in ADMINS:
-        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs)
+        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s)
     else:
         e="Permission denied!"
-        return render_template('iamerror.html', e=e)
+        return render_template('iamerror.html', e=e, user=username)
 
 @app.route('/')
 @auth.login_required
@@ -284,9 +286,13 @@ def upload():
         f = request.files['sample']
         if f and allowed_file(f.filename):
             fExtension = f.filename.rsplit('.', 1)[1]
-            fSum = hashlib(f.filename.rsplit('.', 1)[0]).hexdigest()
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
+            hash_sha256 = hashlib.sha256()
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], sfname), mode='rb') as fSum:
+                for chunk in iter(lambda: fSum.read(4096), b''):
+                    hash_sha256.update(chunk)
+            fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
         print("Submitting: {}".format(str(sfname)))

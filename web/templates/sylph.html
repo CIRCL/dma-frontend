@@ -7,6 +7,11 @@
   <meta name="description" content="Maintenance page to ease the wait">
   <meta name="author" content="CIRCL">
 
+  <style type="text/css">
+        td { width: 30px; overflow: hidden; }
+        table { width : 90px; table-layout: fixed; }
+  </style>
+
     <!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
     <!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
     <!--script src="js/less-1.3.3.min.js"></script-->
@@ -39,7 +44,10 @@
     <link href="static/css/bootstrap-select.css" rel="stylesheet">
         <script type="text/javascript">
             $(document).ready(function(e) {
-                $('.selectpicker').selectpicker();
+                $('.selectpicker').on('change', function(){
+                var selected = $(this).find("option:selected").val();
+                //alert(selected);
+                });
             });
         </script>
         <script type="text/javascript" charset="utf-8">
@@ -66,7 +74,7 @@
                         <div class="nav-collapse collapse navbar-responsive-collapse">
                             <ul class="nav pull-right">
                                 <li> </li>
-                                <li>Logged as <b></b></li>
+                                <li>Logged as <b>{{ user }}</b></li>
                                 <li class="divider-vertical"> </li>
                             </ul>
                         </div>
@@ -82,10 +90,108 @@
                 <div class="panel-heading">Malicious sample upload interface is temporarily ERROR</div>
                 <div class="panel-body">
                 {{ e }}
+
                 </div>
             </div>
         </div>
     </div>
+    {% if s %}
+        <div class="hero-unit">
+            <div class="panel panel-primary panel-default">
+                <div class="col-lg-10">
+                    <select class="form-control selectpicker" name="retmax">
+                        <option>10</option>
+                        <option selected>20</option>
+                        <option>30</option>
+                        <option>40</option>
+                        <option>50</option>
+                        <option>60</option>
+                        <option>70</option>
+                        <option>80</option>
+                        <option>90</option>
+                        <option>all</option>
+                    </select>
+                </div>
+                <div class="panel-heading">Status of uploaded sample</div>
+                <table class="table table-hover table-condensed btable tablehead">
+                    <thead>
+                        <!-- PDF -->
+                        <col width="50">
+                        <!-- Task ID -->
+                        <col width="80">
+                        <!-- Submitter -->
+                        <col width="100">
+                        <!-- cuckoo Flav -->
+                        <col width="140">
+                        <!-- Sample -->
+                        <col width="250">
+                        <!-- Status -->
+                        <col width="130">
+                        <!-- Error(s) -->
+                        <col width="">
+                        <!-- System -->
+                        <col width="300">
+                        <!-- Date -->
+                        <col width="200">
+                        <!-- Header of analysis -->
+                        <tr><th>PDF</th><th>Task id</th><th>Submitter</th><th>cuckoo flavour<th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
+                    </thead>
+
+                    {% for t in s %}
+                        <!-- Set the row colour to red or green-->
+                        {% if t['task']['errors']|length > 0 %}
+                            <tr class="error">
+                        {% else %}
+                            <tr class="success">
+                        {% endif %}
+
+                                <!-- PDF -->
+                                <td>
+                                {% if t['task']['status'] == 'reported' %}
+                                    <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}" target="_blank"><img src="static/img/Pdf-Icon-fs8.png" style="height:40px;border:0"></a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                </td>
+                                <!-- Task id -->
+                                <td>
+                                {% if t['task']['status'] == 'reported' %}
+                                    <a href="{{ urlPath }}/rfetch/{{ t['task']['id'] }}" target="_blank">{{ t['task']['id'] }}</a>
+                                {% else %}
+                                    {{ t['task']['id'] }}
+                                {% endif %}
+                                </td>
+                                <!-- Submitter -->
+                                <td>{{ user }}</td>
+                                <!-- cuckoo flavour -->
+                                {% if cuckooStatus['version'] == '1.3-Optiv' %}
+                                    <td>modified<br />Optiv v1.3</td>
+                                {% elif cuckooStatus['version'] == '1.3-NG' %}
+                                    <td>modified<br />Spender v1.3</td>
+                                {% else %}
+                                    <td>vanilla v2.0-HEAD</td>
+                                {% endif %}
+                                <!-- Sample -->
+                                <td> {{ t['task']['target'].split("/")[4] }} </td>
+                                <!-- Status -->
+                                <td> {{ t['task']['status'] }} </td>
+                                <!-- Error(s) -->
+                                <td>
+                                    {% if t['task']['errors']|length > 0 %}
+                                        {{ t['task']['errors'][0] }}
+                                    {% endif %}
+                                </td>
+                                <!-- System -->
+                                <td> {{ t['task']['guest']['name'] }} </td>
+                                <!-- Date -->
+                                <td> {{ t['task']['completed_on'] }} </td>
+                            </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 </body>
 </html>
