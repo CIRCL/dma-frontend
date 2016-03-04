@@ -214,26 +214,36 @@ def dmabeta():
     else:
         return redirect('/')
 
-@app.route('/sylph')
+@app.route('/sylph', methods=['GET', 'POST'])
 @auth.login_required
 def sylph():
     username = auth.username()
     cs = cuckooStatus()
     URL = checkURL()
-    s = status(auth.username(), retmax=3)
+    if request.method == 'POST':
+        if request.form['retmax']:
+            retmax = request.form['retmax']
+            print("setting retmax"+str(retmax))
+            s = status(auth.username(), retmax=request.form['retmax'])
+        else:
+            s = status(auth.username(), retmax=20)
+    if request.method == 'GET':
+        s = status(auth.username())
     if username in ADMINS:
         return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s)
     else:
         e="Permission denied!"
         return render_template('iamerror.html', e=e, user=username)
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @auth.login_required
 def index():
     try:
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
     except requests.exceptions.RequestException as e:
         return render_template('iamerror.html', e=e)
+
+    retmax=20
 
     if MAINTENANCE:
         chkTime = os.path.getmtime('static/img/online_communities.png')
@@ -257,18 +267,21 @@ def index():
 
     URL = checkURL()
     username = auth.username()
-    #if request.form['retmax']:
-    #    print("Form send us retmax: {}".format(str(retmax)))
-    #    s = status(auth.username(), retmax=request.form['retmax'])
-    #else:
+    if request.method == 'POST':
+        if request.form['retmax']:
+            retmax = request.form['retmax']
+            print("setting retmax"+str(retmax))
+            s = status(auth.username(), retmax=request.form['retmax'])
+        else:
+            s = status(auth.username())
+
     if request.method == 'GET':
         s = status(auth.username())
-    else:
-        s = status(auth.username(), retmax=request.form['retmax'])
+
     m = machines()
-    print(s)
+    #print(s)
     cs = cuckooStatus()
-    return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
+    return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, retmax=retmax)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -294,16 +307,15 @@ def upload():
                     hash_sha256.update(chunk)
             fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
+        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package'])
         print("Submitting: {}".format(str(sfname)))
-        print(auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+request.files['sample'].filename+":"+request.form['machine']+":"+request.form['package'])
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
 def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+auth.username())
+    t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/pdf")
@@ -315,9 +327,10 @@ def pfetch(taskid, auth=auth):
 @auth.login_required
 def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+auth.username())
+    t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
+        print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
         return r.text
     else:

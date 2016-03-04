@@ -84,13 +84,13 @@ do
         CUCKOO_VERSION=`curl -s ${CUCKOO_API_URL[i]}${CUCKOO_STATUS} |jq -r .version`
         # xargs is used to trim any leading spaces
         if [ "$CUCKOO_VERSION" == "2.0-dev" ]; then
-            task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
+            task_id=`curl -F package=${package} -F machine=${machine} -F file=@"${file}" ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
             status=$($REDISCLI -n 5 SADD t:${user}:HEAD ${task_id})
             echo "task_id ${task_id}"
             submitAdmin
             submitMail $i
         elif [ "$CUCKOO_VERSION" = "1.3-Optiv" ] || [ "$CUCKOO_VERSION" = "1.3-NG" ]; then
-            task_id=`curl -F package=${package} -F machine=${machine} -F file=@${file} ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
+            task_id=`curl -F package=${package} -F machine=${machine} -F file=@"${file}" ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_ids | grep '[0-9]' |xargs`
             echo "task_id ${task_id}"
             status=$($REDISCLI -n 5 SADD t:${user}:modified ${task_id})
             submitAdmin
