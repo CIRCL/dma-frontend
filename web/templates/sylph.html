@@ -72,7 +72,7 @@
             <div class="navbar">
                 <div class="navbar-inner">
                     <div class="container-fluid">
-                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a>
+                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a><img src="static/img/sylp_icon.png" class="img-rounded"/>
                         <div class="nav-collapse collapse navbar-responsive-collapse">
                             <ul class="nav pull-right">
                                 <li> </li>
@@ -103,18 +103,15 @@
                 <div class="col-lg-10">
                     <form role="form" method="POST" enctype="multipart/form-data" action="{{ urlPath+url_for('sylph') }}">
                         <select class="form-control selectpicker" id="retmax" name="retmax" onchange="this.form.submit()">
+                            <option value={{ retmax }} selected>Showing: {{ retmax }}</option>
                             <option>5</option>
                             <option>10</option>
-                            <option selected>20</option>
                             <option>30</option>
-                            <option>40</option>
-                            <option>50</option>
                             <option>60</option>
                             <option>70</option>
-                            <option>80</option>
-                            <option>90</option>
                             <option>all</option>
                         </select>
+                        <input name="errors" type="checkbox" checked value="ERR"/> Show Failed Analysis
                     </form>
                 </div>
                 <div class="panel-heading">Status of uploaded sample</div>

@@ -13,7 +13,7 @@ GPG_ENABLE=false
 
 ADMINS="circl"
 
-SUBMISSION_MAIL="steve.clement@circl.lu"
+SUBMISSION_MAIL="info@circl.lu"
 
 # functions
 function submitAdmin()
