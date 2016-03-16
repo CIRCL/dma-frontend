@@ -1,4 +1,14 @@
 .btable {
-    table-layout: fixed;
-    word-wrap: break-word;
+  table-layout: fixed;
+  word-wrap: break-word;
+}
+
+td {
+  width: 30px;
+  overflow: hidden;
+}
+
+table {
+  width : 90px;
+  table-layout: fixed;
 }

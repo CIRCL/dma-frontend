@@ -18,6 +18,7 @@ from redis import Redis
 import redis
 import re
 
+
 try:
     import xkcd
     XKCD = True
@@ -48,6 +49,10 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
 if DEBUG:
     app.config['DEBUG'] = True
+    # Disable GET log
+    import logging
+    log = logging.getLogger('werkzeug')
+    log.disabled = True
 else:
     app.config['DEBUG'] = False
 
