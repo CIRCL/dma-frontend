@@ -160,8 +160,8 @@ def statusDevel(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
     if len(k) > 1:
-        for k in foo:
-            key = k.decode('utf-8')
+        for ke in k:
+            key = ke.decode('utf-8')
             keySplit = key.split(":")
             if key.count(":") == 2:
                 print("Grabbing client {} flavour {}".format(keySplit[1], keySplit[2]))
@@ -186,11 +186,19 @@ def statusDevel(username, retmax=20):
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
-    for task in sorted(at, key=lambda x: int(x), reverse=True)[:retmax]:
+    for task in sorted(at, key=lambda x: str(x), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
-        r = requests.get(BASE_URL[0]+TASKS_VIEW+task.decode('utf-8'))
+        if "-" in task.decode('utf-8'):
+            uuidSubmission = task.decode('utf-8').split(":")[1]
+            task = task.decode('utf-8').split(":")[0]
+        else:
+            task = task.decode('utf-8')
+            uuidSubmission = None
+        r = requests.get(BASE_URL[0]+TASKS_VIEW+task)
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
+            if uuidSubmission:
+                j["task"]["uuid"] = uuidSubmission
             x.append(j)
         else:
             # Some times we get a bad response and need to handle it. This also serves as place-debug-holder to see what is include in the variable 'x'
@@ -223,9 +231,14 @@ def status(username, retmax=20):
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
-    for task in sorted(at, key=lambda x: int(x), reverse=True)[:retmax]:
+    for task in sorted(at, key=lambda x: str(x), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
-        r = requests.get(BASE_URL[0]+TASKS_VIEW+task.decode('utf-8'))
+        if "-" in task.decode('utf-8'):
+            task = task.decode('utf-8').split(":")[1]
+        else:
+            task = task.decode('utf-8')
+
+        r = requests.get(BASE_URL[0]+TASKS_VIEW+task)
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
             x.append(j)
@@ -310,7 +323,7 @@ def api():
                     hash_sha256.update(chunk)
             fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        uuidSubmission = generate_sid()
+        uuidSubmission = str(uuid4())
         for machine in m:
             r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+machine+":"+fExtension+":"+ uuidSubmission)
             print("Submitting: {} to Machine: {}".format(str(sfname), machine))
@@ -325,16 +338,22 @@ def sylph():
     username = auth.username()
     cs = cuckooStatus()
     URL = checkURL()
+    errors = "ERR"
     if request.method == 'POST':
         if request.form['retmax']:
             retmax = request.form['retmax']
             s = statusDevel(auth.username(), retmax=retmax)
         else:
             s = statusDevel(auth.username(), retmax=20)
+        if request.form['errors']:
+            print(request.form.getlist('errors'))
+            errors = request.form['errors']
+        else:
+            errors = ""
     if request.method == 'GET':
         s = statusDevel(auth.username())
     if username in ADMINS:
-        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax)
+        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax, errors=errors)
     else:
         e="Permission denied!"
         return render_template('iamerror.html', e=e, user=username)
@@ -409,7 +428,7 @@ def upload():
                     hash_sha256.update(chunk)
             fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        uuidSubmission = generate_sid()
+        uuidSubmission = str(uuid4())
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package']+":"+ uuidSubmission)
         print("Submitting: {}".format(str(sfname)))
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, uuid=uuidSubmission)
