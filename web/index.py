@@ -136,6 +136,19 @@ def getTime(seconds):
     else:
         return("{} seconds".format(d.second))
 
+## TODO
+def mail(to="steve.clement@circl.lu", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
+    print("Send-to: {} with Subject: {} and message: {}".format(to, subject, message))
+
+def grabTask(username, flavour="v1"):
+    red = redis.StrictRedis(host='localhost', port=6379, db=5)
+    k = red.keys()
+    if flavour == "v1" or not flavour:
+        t = red.smembers("t:"+username)
+    else:
+        t = red.smembers("t:"+username+":"+ flavour)
+    return t
+
 def statusDevel(username, retmax=20):
     tasks = {}
 
@@ -147,7 +160,17 @@ def statusDevel(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
     if len(k) > 1:
-        t = red.smembers("t:"+username+":modified")
+        for k in foo:
+            key = k.decode('utf-8')
+            keySplit = key.split(":")
+            if key.count(":") == 2:
+                print("Grabbing client {} flavour {}".format(keySplit[1], keySplit[2]))
+            elif key.count(":") == 1:
+                print("Grabbing client {} flavour v1".format(keySplit[1]))
+            else:
+                print("Either less then 1 or more then 2 in line {}".format(key))
+                # Implement mailer for errors mail("$ERROR")
+        t = grabTask(username,"modified")
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -158,7 +181,8 @@ def statusDevel(username, retmax=20):
             except IndexError:
                 gotdata = 'null'
     else:
-        t = red.smembers("t:"+username)
+        t = grabTask(username,"v1")
+
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
@@ -262,6 +286,38 @@ def dmabeta():
     else:
         return redirect('/')
 
+@app.route('/api', methods=['GET', 'POST'])
+@auth.login_required
+def api():
+    print("This is an API place-debug-holder")
+    # Simple post for base64 encoded binary. Return uuid and map uuid to subsmission id
+    # Submit and return uuid
+    URL = checkURL()
+    s = status(auth.username())
+    m = machines()
+    cs = cuckooStatus()
+    username = auth.username()
+    # Handle API POST
+    if request.method == 'POST' and request.files['sample']:
+        f = request.files['sample']
+        if f and allowed_file(f.filename):
+            fExtension = f.filename.rsplit('.', 1)[1]
+            sfname = secure_filename(f.filename)
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
+            hash_sha256 = hashlib.sha256()
+            with open(os.path.join(app.config['UPLOAD_FOLDER'], sfname), mode='rb') as fSum:
+                for chunk in iter(lambda: fSum.read(4096), b''):
+                    hash_sha256.update(chunk)
+            fSumSHA256 = hash_sha256.hexdigest()
+        r = redis.StrictRedis(host='localhost', port=6379, db=5)
+        uuidSubmission = generate_sid()
+        for machine in m:
+            r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+machine+":"+fExtension+":"+ uuidSubmission)
+            print("Submitting: {} to Machine: {}".format(str(sfname), machine))
+        return render_template('api.json', s=s, uuidSubmission=uuidSubmission)
+    if request.method == 'GET':
+        return render_template('api.json')
+
 @app.route('/sylph', methods=['GET', 'POST'])
 @auth.login_required
 def sylph():
@@ -353,9 +409,10 @@ def upload():
                     hash_sha256.update(chunk)
             fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package'])
+        uuidSubmission = generate_sid()
+        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package']+":"+ uuidSubmission)
         print("Submitting: {}".format(str(sfname)))
-    return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs)
+    return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, uuid=uuidSubmission)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
