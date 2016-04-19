@@ -15,6 +15,8 @@ from urllib.parse import urlparse
 from datetime import timedelta, datetime
 from uuid import uuid4
 from redis import Redis
+import smtplib
+from email.mime.text import MIMEText
 import redis
 import re
 
@@ -136,9 +138,14 @@ def getTime(seconds):
     else:
         return("{} seconds".format(d.second))
 
-## TODO
 def mail(to="steve.clement@circl.lu", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
-    print("Send-to: {} with Subject: {} and message: {}".format(to, subject, message))
+    msg = MIMEText(message)
+    msg['Subject'] = subject
+    msg['From'] = "dma-crgb@circl.lu"
+    msg['To'] = to
+    s = smtplib.SMTP('cpb.circl.lu')
+    s.send_message(msg)
+    s.quit()
 
 def grabTask(username, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
@@ -151,13 +158,16 @@ def grabTask(username, flavour="v1"):
 
 def statusDevel(username, retmax=20):
     tasks = {}
+    x = []
 
     if retmax == 'all':
         retmax = -1
     else:
         retmax = int(retmax)
 
+    # Connect to redis db 5
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
+    # read in all the keys
     k = red.keys()
     if len(k) > 1:
         for ke in k:
@@ -165,12 +175,16 @@ def statusDevel(username, retmax=20):
             keySplit = key.split(":")
             if key.count(":") == 2:
                 print("Grabbing client {} flavour {}".format(keySplit[1], keySplit[2]))
+                t = grabTask(username, keySplit[2])
+                #x.append(fetchTask(t, retmax))
+                x = fetchTask(t, retmax)
             elif key.count(":") == 1:
                 print("Grabbing client {} flavour v1".format(keySplit[1]))
             else:
                 print("Either less then 1 or more then 2 in line {}".format(key))
                 # Implement mailer for errors mail("$ERROR")
-        t = grabTask(username,"modified")
+                mail(subject="[DMA] key.count #fail", message="Either less then 1 or more then 2 in line {}".format(key))
+        return x
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -183,6 +197,7 @@ def statusDevel(username, retmax=20):
     else:
         t = grabTask(username,"v1")
 
+def fetchTask(t, retmax):
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
@@ -234,10 +249,9 @@ def status(username, retmax=20):
     for task in sorted(at, key=lambda x: str(x), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
         if "-" in task.decode('utf-8'):
-            task = task.decode('utf-8').split(":")[1]
+            task = task.decode('utf-8').split(":")[0]
         else:
             task = task.decode('utf-8')
-
         r = requests.get(BASE_URL[0]+TASKS_VIEW+task)
         if r.status_code == requests.codes.ok:
             j = json.loads(r.text)
@@ -450,6 +464,7 @@ def pfetch(taskid, auth=auth):
 def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     t = red.smembers("t:"+auth.username()+":modified")
+    print(t)
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
