@@ -51,10 +51,10 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
 if DEBUG:
     app.config['DEBUG'] = True
-    # Disable GET log
+    # Disable GET log, also disable Debug Log
     import logging
     log = logging.getLogger('werkzeug')
-    log.disabled = True
+    log.disabled = False
 else:
     app.config['DEBUG'] = False
 
@@ -246,7 +246,7 @@ def status(username, retmax=20):
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
-    for task in sorted(at, key=lambda x: str(x), reverse=True)[:retmax]:
+    for task in sorted(at, key=lambda x: int(x.split(b':')[0]), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
         if "-" in task.decode('utf-8'):
             task = task.decode('utf-8').split(":")[0]
