@@ -1,7 +1,8 @@
-Flask==0.10.1
+Flask==0.11.1
+Flask-API==0.6.6.post1
 Flask-Bcrypt==0.7.1
-Flask-HTTPAuth==2.7.0
-requests==2.10.0
-redis==2.10.5
+Flask-HTTPAuth==3.1.2
 python-magic==0.4.11
+redis==2.10.5
+requests==2.10.0
 xkcd==2.4.0
