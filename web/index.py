@@ -7,7 +7,7 @@ import requests, json, pickle
 import hashlib
 from flask import Flask, Response, render_template, url_for, request, g, redirect
 from flask_httpauth import HTTPBasicAuth
-from flask.ext.bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt
 from flask.sessions import SessionInterface, SessionMixin
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import CallbackDict
@@ -34,7 +34,7 @@ except ImportError:
   sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
 # Allowed extensions to be uploaded
-ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'doc', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
+ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'docx', 'doc', 'docm', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
 
 # Configurables
 MAINTENANCE  = False
@@ -51,10 +51,10 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
 if DEBUG:
     app.config['DEBUG'] = True
-    # Disable GET log
+    # Disable GET log, also disable Debug Log
     import logging
     log = logging.getLogger('werkzeug')
-    log.disabled = True
+    log.disabled = False
 else:
     app.config['DEBUG'] = False
 
@@ -246,7 +246,7 @@ def status(username, retmax=20):
     x = []
     at = list(t)
     at = [a for a in at if a != b'null']
-    for task in sorted(at, key=lambda x: str(x), reverse=True)[:retmax]:
+    for task in sorted(at, key=lambda x: int(x.split(b':')[0]), reverse=True)[:retmax]:
         ## IMPLEMENT MULTI INSTANCE
         if "-" in task.decode('utf-8'):
             task = task.decode('utf-8').split(":")[0]
@@ -327,7 +327,8 @@ def api():
     # Handle API POST
     if request.method == 'POST' and request.files['sample']:
         f = request.files['sample']
-        if f and allowed_file(f.filename):
+        #if f and allowed_file(f.filename):
+        if f:
             fExtension = f.filename.rsplit('.', 1)[1]
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
@@ -419,8 +420,8 @@ def index():
     return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, retmax=retmax)
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    return '.' in filename # and \
+           #filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['GET', 'POST'])
 @auth.login_required
@@ -432,7 +433,8 @@ def upload():
     username = auth.username()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
-        if f and allowed_file(f.filename):
+        #if f and allowed_file(f.filename):
+        if f:
             fExtension = f.filename.rsplit('.', 1)[1]
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
