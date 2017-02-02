@@ -23,9 +23,8 @@ else
     GPG_ENABLE=false
 fi
 
-ADMINS="circl"
-
-SUBMISSION_MAIL="info@circl.lu"
+ADMINS="yourBasicAuthAdminUsername"
+SUBMISSION_MAIL="yourSubmissionAddress@example.com"
 
 # functions
 function submitAdmin()

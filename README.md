@@ -57,6 +57,16 @@ Edit and run ```user-hash.py``` - The file is self explanatory and gives further
 
 Make sure you have a mailer setup otherwise you will obviously not be able to receive reports
 
+## Config bin/submit.sh
+
+In the bin/submit.sh file you need to change the following 3 variables and 1 function:
+
+```
+CUCKOO_API_URL
+ADMINS
+SUBMISSION_MAIL
+```
+
 ## Config web/index.py
 
 In the web/index.py file you need to change the following 3 variables and 1 function:
