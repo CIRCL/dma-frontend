@@ -19,8 +19,6 @@ import smtplib
 from email.mime.text import MIMEText
 import redis
 import re
-from raven.contrib.flask import Sentry
-
 
 try:
     import xkcd
@@ -58,8 +56,6 @@ else:
 
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
-
-sentry = Sentry(app, dsn='https://07d46ee35c6e4304843d665942ab8183:d3c1183a75634384a0d30bc3f444afb0@sentry.io/96389')
 
 
 # Setup HTTP BasicAuth
