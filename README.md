@@ -41,6 +41,10 @@ source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 
 ### pip
 
+Make sure your shell looks something like this: (dma-frontend) cuckoo@myHost:~$
+
+If that is not the case: workong dma-frontend
+
 ```
 sudo pip3 install -r requirements.txt
 ```
@@ -48,7 +52,6 @@ sudo pip3 install -r requirements.txt
 ### Mailer
 
 Make sure you have a mailer setup otherwise you will obviously not be able to receive reports
-
 
 # License
 
