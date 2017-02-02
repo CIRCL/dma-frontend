@@ -10,8 +10,14 @@ REDISCLI=`which redis-cli` && echo "Got redis-cli continuing…" || exit 1
 MUTTCMD=`which mutt` && echo "Got mutt continuing…" || exit 1
 
 # If you enable GPG make sure the recipient GPG key is in the keyring of the user running submit.sh
-# This also enables file attachments of the submitted files
-GPG_ENABLE=false
+# This also enables file attachments of the submitted files.
+
+# Simple check if a gpg.conf is available, if yes we weakly assume you configured gpg on the system.
+if [ -e ~/.gnupg/gpg.conf ]; then
+    GPG_ENABLE=true
+else
+    GPG_ENABLE=false
+fi
 
 ADMINS="circl"
 
@@ -77,11 +83,11 @@ do
         machine=`echo "${VAL}" |  cut -f3 -d:`
         package=`echo "${VAL}" |  cut -f4 -d:`
         uuid=`echo "${VAL}" |cut -f5 -d:`
-        echo "username             : ${user}"
-        echo "file                        : ${file}"
+        echo "username              : ${user}"
+        echo "file                  : ${file}"
         echo "machine               : ${machine}"
         echo "package               : ${package}"
-        echo "uuid                      : ${uuid}"
+        echo "uuid                  : ${uuid}"
         echo "# of cuckoo instances : ${CUCKOO_COUNT}"
         for (( i=0; i<${CUCKOO_COUNT}; i++ ));
         do

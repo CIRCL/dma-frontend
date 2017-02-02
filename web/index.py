@@ -19,6 +19,7 @@ import smtplib
 from email.mime.text import MIMEText
 import redis
 import re
+from raven.contrib.flask import Sentry
 
 
 try:
@@ -29,12 +30,9 @@ except ImportError:
     XKCD = False
 
 try:
-  from DMAusers import *
+    from DMAusers import *
 except ImportError:
-  sys.exit("Please create a file with a users dictionary in: DMAusers.py")
-
-# Allowed extensions to be uploaded
-ALLOWED_EXTENSIONS = set(['applet', 'bin', 'dll', 'docx', 'doc', 'docm', 'exe', 'html', 'ie', 'jar', 'pdf', 'vbs', 'xls', 'zip', 'jpg', 'jpeg', 'gif', 'png', 'tif', 'tiff', 'apk', 'cmd', 'bat', 'infected'])
+    sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
 # Configurables
 MAINTENANCE  = False
@@ -60,6 +58,8 @@ else:
 
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
+
+sentry = Sentry(app, dsn='https://07d46ee35c6e4304843d665942ab8183:d3c1183a75634384a0d30bc3f444afb0@sentry.io/96389')
 
 
 # Setup HTTP BasicAuth
@@ -327,9 +327,11 @@ def api():
     # Handle API POST
     if request.method == 'POST' and request.files['sample']:
         f = request.files['sample']
-        #if f and allowed_file(f.filename):
         if f:
-            fExtension = f.filename.rsplit('.', 1)[1]
+            try:
+                fExtension = f.filename.rsplit('.', 1)[1]
+            except IndexError:
+                fExtension = 'NaN'
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
             hash_sha256 = hashlib.sha256()
@@ -419,10 +421,6 @@ def index():
     cs = cuckooStatus()
     return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, retmax=retmax)
 
-def allowed_file(filename):
-    return '.' in filename # and \
-           #filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
 @app.route('/upload', methods=['GET', 'POST'])
 @auth.login_required
 def upload():
@@ -433,9 +431,11 @@ def upload():
     username = auth.username()
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
-        #if f and allowed_file(f.filename):
         if f:
-            fExtension = f.filename.rsplit('.', 1)[1]
+            try:
+                fExtension = f.filename.rsplit('.', 1)[1]
+            except IndexError:
+                fExtension = 'NaN'
             sfname = secure_filename(f.filename)
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
             hash_sha256 = hashlib.sha256()
