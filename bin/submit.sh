@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CUCKOO_API_URL=("http://crgb:8090" "http://crg:8090")
 CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"

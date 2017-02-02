@@ -49,6 +49,10 @@ If that is not the case: workong dma-frontend
 sudo pip3 install -r requirements.txt
 ```
 
+### Adding basic auth users
+
+Edit and run ```user-hash.py``` - The file is self explanatory and gives further instructions.
+
 ### Mailer
 
 Make sure you have a mailer setup otherwise you will obviously not be able to receive reports
