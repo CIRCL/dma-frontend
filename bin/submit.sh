@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-CUCKOO_API_URL=("http://crgb:8090" "http://crg:8090")
+# One cuckoo server (e.g. 1 API server running)
+CUCKOO_API_URL=("http://my-cuckoo-server.local:8090")
+# Two cuckoo servers (e.g. 2 API servers running)
+#CUCKOO_API_URL=("http://my-cuckoo-server.local:8090" "http://my-cuckoo-modified-server.local:8090")
+
 CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"
 CUCKOO_API_TASKS_VIEW="/tasks/view/"
 CUCKOO_STATUS="/cuckoo/status"
