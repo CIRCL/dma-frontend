@@ -30,6 +30,13 @@ sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 vi
 
 ```
 mkvirtualenv -p /usr/bin/python3 dma-frontend
+# Add the following lines to your .bashrc/.zshrc/.whateverYourShellrc
+--------8<--------
+# virtualenv
+export VIRTUALENVWRAPPER_PYTHON=$(which python3)
+export WORKON_HOME=~/.virtualenvs
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+--------8<--------
 ```
 
 ### pip
