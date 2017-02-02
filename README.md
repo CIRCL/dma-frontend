@@ -12,6 +12,9 @@
 
 ### python3 modules
 
+Since Flask v0.10 and Werkzeug 0.9 Python3 >= 3.3 is supported.
+More [information here.](http://flask.pocoo.org/docs/0.12/python3/)
+
 - flask
 - flask-httpauth
 - redis

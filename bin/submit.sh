@@ -9,6 +9,8 @@ echo -n "Checking for redis-cli and mutt (want to be in \$PATH) will exit 1 if n
 REDISCLI=`which redis-cli` && echo "Got redis-cli continuing…" || exit 1
 MUTTCMD=`which mutt` && echo "Got mutt continuing…" || exit 1
 
+# If you enable GPG make sure the recipient GPG key is in the keyring of the user running submit.sh
+# This also enables file attachments of the submitted files
 GPG_ENABLE=false
 
 ADMINS="circl"
