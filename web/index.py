@@ -35,12 +35,15 @@ except ImportError:
 # Configurables
 MAINTENANCE  = False
 DEBUG = True
-BASE_URL = [ "http://crgb.circl.lu:8090", "http://crg.circl.lu:8090" ]
+# One cuckoo instance
+BASE_URL = [ "http://my-cuckoo-server.local:8090" ]
+# Two cuckoo instances
+#BASE_URL = [ "http://my-cuckoo-server.local:8090", "http://my-cuckoo-modified-server.local:8090" ]
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
-ADMINS = [ "circl" ]
+ADMINS = [ "yourBasicAuthAdminUsername" ]
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -55,8 +58,9 @@ else:
     app.config['DEBUG'] = False
 
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
-app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
+### /!\ Configure upload folder /!\
+app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
 
 # Setup HTTP BasicAuth
 auth = HTTPBasicAuth()
@@ -134,12 +138,12 @@ def getTime(seconds):
     else:
         return("{} seconds".format(d.second))
 
-def mail(to="steve.clement@circl.lu", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
+def mail(to="your.address@example.com", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
     msg = MIMEText(message)
     msg['Subject'] = subject
-    msg['From'] = "dma-crgb@circl.lu"
+    msg['From'] = "dma-my-cuckoo-server@example.com"
     msg['To'] = to
-    s = smtplib.SMTP('cpb.circl.lu')
+    s = smtplib.SMTP('your-outgoing-smtp-that-relays-for-you.local')
     s.send_message(msg)
     s.quit()
 
@@ -281,7 +285,7 @@ def checkURL():
     else:
         URI=urlparse(url_for('.index', _external=True))
         HOST=re.split(':', URI[1])[0]
-        URL=URI[0]+"://"+URI[1] # http://crgb.circl.lu:5000
+        URL=URI[0]+"://"+URI[1]
     return URL
 
 @auth.verify_password
@@ -296,7 +300,8 @@ def verify_pw(username, password):
 @app.route('/dma/')
 @app.route('/dma')
 def dma():
-    if (HOST == "www.circl.lu") or (HOST == "circl.lu"):
+    # The following check is to make revers proxies happy
+    if (HOST == "www.example.com") or (HOST == "example.com"):
         return redirect('/dma/')
     else:
         return redirect('/')
@@ -304,7 +309,8 @@ def dma():
 @app.route('/dmabeta/')
 @app.route('/dmabeta')
 def dmabeta():
-    if (HOST == "www.circl.lu") or (HOST == "circl.lu"):
+    # The following check is to make revers proxies happy
+    if (HOST == "www.example.com") or (HOST == "example.com"):
         return redirect('/dmabeta/')
     else:
         return redirect('/')
