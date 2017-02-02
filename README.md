@@ -1,5 +1,9 @@
 # dma-frontend
 
+![CIRCL DMA](https://www.circl.lu/assets/images/logos/start/logo-dma.png)
+
+dma-frontend is a minimalist web frontend to support submissions into sandboxes like [Cuckoo](https://github.com/cuckoosandbox/cuckoo) and get the reports from the same location. It can be easily extended to support a series of analysis from the same sample submission.
+
 ## Requirements
 
 ### submit.sh
@@ -21,7 +25,7 @@ More [information here.](http://flask.pocoo.org/docs/0.12/python3/)
 - requests
 - json
 
-### Ubuntu installs via apt-get 
+### Ubuntu installs via apt-get
 ```
 sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 virtualenv virtualenv-wrapper
 ```
