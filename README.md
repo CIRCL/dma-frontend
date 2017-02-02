@@ -57,6 +57,29 @@ Edit and run ```user-hash.py``` - The file is self explanatory and gives further
 
 Make sure you have a mailer setup otherwise you will obviously not be able to receive reports
 
+## Running with tmux
+
+The frontend can be run in a tmux/screen environment. Below is a snapshot what it might look like
+
+```
+
+─────────────────────────────────────────────────────────────────────────────────────────────
+(cuckoo) cuckoo@cph:~/cuckoo/utils$ cd ~/cuckoo/utils && python api.py --host 0.0.0.0
+ * Running on http://0.0.0.0:8090/ (Press CTRL+C to quit)
+127.0.0.1 - - [02/Feb/2017 17:07:42] "GET /cuckoo/status HTTP/1.1" 200 -
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────────────
+(dma-frontend) cuckoo@my-cuckoo-server:~/dma-frontend/web$ python3 index.py                  │cuckoo@my-cuckoo-server:~/dma-frontend$ ./bin/submit.sh
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)                                    │Checking for redis-cli and mutt (want to be in $PATH) will exit 1 if not found. Got redis-cli continuing…
+ * Restarting with stat                                                                      │Got mutt continuing…
+ * Debugger is active!                                                                       │# of cuckoo instances : 1
+ * Debugger pin code: 278-858-799                                                            │Checking API http://0.0.0.0:8090/cuckoo/status
+                                                                                             │You run cuckoo version 2.0-dev on cuckoo instance 0
+                                                                                             │
+```
+
 # License
 
 This software is licensed under [GNU Affero General Public License version 3](http://www.gnu.org/licenses/agpl-3.0.html)
