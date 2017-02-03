@@ -27,7 +27,7 @@ More [information here.](http://flask.pocoo.org/docs/0.12/python3/)
 
 ### Ubuntu installs via apt-get
 ```
-sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 virtualenv virtualenv-wrapper
+sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 virtualenv virtualenvwrapper
 ```
 
 ### Setup virtualenv
