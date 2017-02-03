@@ -192,6 +192,8 @@
                             <tr class="success">
                         {% elif t['task']['status'] == 'running' %}
 			    <tr class="warning">
+                        {% elif t['task']['status'] == 'pending' %}
+			    <tr class="info">
                         {% else %}
                             <tr class="error">
                         {% endif %}

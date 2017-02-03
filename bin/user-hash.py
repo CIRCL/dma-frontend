@@ -8,7 +8,7 @@ except ImportError:
     sys.exit("Install bcrypt please")
 
 users = {
-    "circl": "myPlainTextPassword",
+    "steve": "steve",
 }
 
 print("users = {")

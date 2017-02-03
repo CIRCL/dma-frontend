@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # One cuckoo server (e.g. 1 API server running)
-CUCKOO_API_URL=("http://my-cuckoo-server.local:8090")
+CUCKOO_API_URL=("http://localhost:8090")
 # Two cuckoo servers (e.g. 2 API servers running)
 #CUCKOO_API_URL=("http://my-cuckoo-server.local:8090" "http://my-cuckoo-modified-server.local:8090")
 
@@ -22,9 +22,10 @@ if [ -e ~/.gnupg/gpg.conf ]; then
 else
     GPG_ENABLE=false
 fi
+    GPG_ENABLE=false
 
-ADMINS="yourBasicAuthAdminUsername"
-SUBMISSION_MAIL="yourSubmissionAddress@example.com"
+ADMINS="steve"
+SUBMISSION_MAIL="test@cuckoo.office.lan"
 
 # functions
 function submitAdmin()

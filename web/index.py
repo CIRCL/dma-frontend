@@ -36,14 +36,14 @@ except ImportError:
 MAINTENANCE  = False
 DEBUG = True
 # One cuckoo instance
-BASE_URL = [ "http://my-cuckoo-server.local:8090" ]
+BASE_URL = [ "http://localhost:8090" ]
 # Two cuckoo instances
 #BASE_URL = [ "http://my-cuckoo-server.local:8090", "http://my-cuckoo-modified-server.local:8090" ]
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
-ADMINS = [ "yourBasicAuthAdminUsername" ]
+ADMINS = [ "steve" ]
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -138,12 +138,12 @@ def getTime(seconds):
     else:
         return("{} seconds".format(d.second))
 
-def mail(to="your.address@example.com", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
+def mail(to="steve.clement@circl.lu", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
     msg = MIMEText(message)
     msg['Subject'] = subject
-    msg['From'] = "dma-my-cuckoo-server@example.com"
+    msg['From'] = "test@cuckoo.office.lan"
     msg['To'] = to
-    s = smtplib.SMTP('your-outgoing-smtp-that-relays-for-you.local')
+    s = smtplib.SMTP('172.16.100.118')
     s.send_message(msg)
     s.quit()
 
@@ -371,6 +371,7 @@ def sylph():
             errors = ""
     if request.method == 'GET':
         s = statusDevel(auth.username())
+        print(s[0]['task']['status'])
     if username in ADMINS:
         return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax, errors=errors)
     else:
