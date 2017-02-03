@@ -3,6 +3,7 @@
 #
 
 import os.path, sys, time, random
+from pathlib import Path
 import requests, json, pickle
 import hashlib
 from flask import Flask, Response, render_template, url_for, request, g, redirect
@@ -67,6 +68,13 @@ app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 
 ### /!\ Configure upload folder /!\
 app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
+
+try:
+    file_or_directory = Path(app.config['UPLOAD_FOLDER'])
+    if not file_or_directory.exists():
+        raise
+except:
+    sys.exit("Please create the upload folder: {}".format(app.config['UPLOAD_FOLDER']))
 
 # Setup HTTP BasicAuth
 auth = HTTPBasicAuth()
