@@ -111,6 +111,24 @@ The frontend can be run in a tmux/screen environment. Below is a snapshot what i
                                                                                              │                                                                                                          |
 ```
 
+# I am error
+
+## HTTPConnectionPool
+
+This just means that we cannot connect to the cuckoo API on port 8090
+
+```python
+HTTPConnectionPool(host='localhost', port=8090): Max retries exceeded with url: /cuckoo/status (Caused by NewConnectionError('<requests.packages.urllib3.connection.HTTPConnection object at 0x106890e10>: Failed to establish a new connection: [Errno 61] Connection refused',))
+```
+
+## redis exceptions
+
+If you pull the rug under redis or it dies, you will get a generic Werkzeug error. Just restart redis-server.
+
+```python
+redis.exceptions.ConnectionError: Error 61 connecting to localhost:6379. Connection refused.
+```
+
 # License
 
 This software is licensed under [GNU Affero General Public License version 3](http://www.gnu.org/licenses/agpl-3.0.html)

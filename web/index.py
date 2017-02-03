@@ -32,18 +32,24 @@ try:
 except ImportError:
     sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
+try:
+    rs = Redis("localhost")
+    response = rs.client_list()
+except redis.ConnectionError:
+    sys.exit("Redis Connection Error? Is redis-server running?")
+
 # Configurables
 MAINTENANCE  = False
 DEBUG = True
 # One cuckoo instance
-BASE_URL = [ "http://localhost:8090" ]
+BASE_URL = [ "http://my-cuckoo-server.local:8090" ]
 # Two cuckoo instances
 #BASE_URL = [ "http://my-cuckoo-server.local:8090", "http://my-cuckoo-modified-server.local:8090" ]
 TASKS_VIEW = "/tasks/view/"
 TASKS_REPORT = "/tasks/report/"
 CUCKOO_STATUS = "/cuckoo/status"
 MACHINES_LIST = "/machines/list"
-ADMINS = [ "steve" ]
+ADMINS = [ "yourBasicAuthAdminUsername" ]
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -100,7 +106,11 @@ class RedisSessionInterface(SessionInterface):
         if not sid:
             sid = self.generate_sid()
             return self.session_class(sid=sid, new=True)
-        val = self.redis.get(self.prefix + sid)
+        try:
+            val = self.redis.get(self.prefix + sid)
+        except redis.ConnectionError:
+            print("Redis not ready!")
+            raise
         if val is not None:
             data = self.serializer.loads(val)
             return self.session_class(data, sid=sid)
@@ -138,12 +148,12 @@ def getTime(seconds):
     else:
         return("{} seconds".format(d.second))
 
-def mail(to="steve.clement@circl.lu", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
+def mail(to="your.address@example.com", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
     msg = MIMEText(message)
     msg['Subject'] = subject
-    msg['From'] = "test@cuckoo.office.lan"
+    msg['From'] = "dma-my-cuckoo-server@example.com"
     msg['To'] = to
-    s = smtplib.SMTP('172.16.100.118')
+    s = smtplib.SMTP('your-outgoing-smtp-that-relays-for-you.local')
     s.send_message(msg)
     s.quit()
 
@@ -371,7 +381,6 @@ def sylph():
             errors = ""
     if request.method == 'GET':
         s = statusDevel(auth.username())
-        print(s[0]['task']['status'])
     if username in ADMINS:
         return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax, errors=errors)
     else:
