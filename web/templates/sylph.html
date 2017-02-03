@@ -145,8 +145,14 @@
                         <!-- Set the row colour to red or green-->
                         {% if t['task']['errors']|length > 0 %}
                             <tr class="error">
-                        {% else %}
+                        {% elif t['task']['status'] == 'failed_analysis' %}
+                            <tr class="error">
+                        {% elif t['task']['status'] == 'reported' %}
                             <tr class="success">
+                        {% elif t['task']['status'] == 'running' %}
+			    <tr class="warning">
+                        {% else %}
+                            <tr class="error">
                         {% endif %}
                           {#       {% if errors == 'ERR' %}
                                     {% if not t['task']['errors'] %} #}
