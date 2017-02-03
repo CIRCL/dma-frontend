@@ -27,13 +27,13 @@ More [information here.](http://flask.pocoo.org/docs/0.12/python3/)
 
 ### Ubuntu installs via apt-get
 ```
-sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 virtualenv virtualenv-wrapper
+sudo apt-get install python3-pip redis-tools redis-server jq mutt curl gnupg2 virtualenv virtualenvwrapper
 ```
 
 ### Setup virtualenv
 
 ```
-mkvirtualenv -p /usr/bin/python3 dma-frontend
+pip3 install virtualenvwrapper
 # Add the following lines to your .bashrc/.zshrc/.whateverYourShellrc
 --------8<--------
 # virtualenv
@@ -41,6 +41,7 @@ export VIRTUALENVWRAPPER_PYTHON=$(which python3)
 export WORKON_HOME=~/.virtualenvs
 source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 --------8<--------
+mkvirtualenv -p /usr/bin/python3 dma-frontend
 ```
 
 ### pip
