@@ -15,12 +15,13 @@ from werkzeug.datastructures import CallbackDict
 from urllib.parse import urlparse
 from datetime import timedelta, datetime
 from uuid import uuid4
+import redis
 from redis import Redis
 import smtplib
 from email.mime.text import MIMEText
-import redis
 import re
 
+# check for xkcd module, used in maintenance mode
 try:
     import xkcd
     XKCD = True
@@ -28,29 +29,28 @@ except ImportError:
     print("Disabling XKCD support, some unicorns are crying right now, some where :'(")
     XKCD = False
 
+# check for DMAusers file, needed to login and auth analyses
 try:
     from DMAusers import *
 except ImportError:
     sys.exit("Please create a file with a users dictionary in: DMAusers.py")
 
+# check if redis is running
 try:
     rs = Redis("localhost")
     response = rs.client_list()
 except redis.ConnectionError:
     sys.exit("Redis Connection Error? Is redis-server running?")
 
+# this is bad style etc, but a dirty fix for now
+# checking if run from main web app directory
+try:
+    goodPath = os.path.getmtime('static/img/online_communities.png')
+except:
+    sys.exit("You have to start index.py IN the web directory.")
+
 # Configurables
-MAINTENANCE  = False
-DEBUG = True
-# One cuckoo instance
-BASE_URL = [ "http://my-cuckoo-server.local:8090" ]
-# Two cuckoo instances
-#BASE_URL = [ "http://my-cuckoo-server.local:8090", "http://my-cuckoo-modified-server.local:8090" ]
-TASKS_VIEW = "/tasks/view/"
-TASKS_REPORT = "/tasks/report/"
-CUCKOO_STATUS = "/cuckoo/status"
-MACHINES_LIST = "/machines/list"
-ADMINS = [ "yourBasicAuthAdminUsername" ]
+from DMAconfig import *
 
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
@@ -67,7 +67,7 @@ else:
 app.config['DEFAULT_FILE_STORAGE'] = 'filesystem'
 
 ### /!\ Configure upload folder /!\
-app.config['UPLOAD_FOLDER']  = '/home/cuckoo/dma-frontend/web/static/upload'
+app.config['UPLOAD_FOLDER']  = UPLOAD_FOLDER
 
 try:
     file_or_directory = Path(app.config['UPLOAD_FOLDER'])
@@ -82,65 +82,10 @@ auth = HTTPBasicAuth()
 # Setup bcrypt
 bcrypt = Bcrypt(app)
 
-class RedisSession(CallbackDict, SessionMixin):
-    def __init__(self, initial=None, sid=None, new=False):
-        def on_update(self):
-            self.modified = True
-        CallbackDict.__init__(self, initial, on_update)
-        self.sid = sid
-        self.new = new
-        self.modified = False
+# import redis scaffolding
+from redisLocal import *
 
-class RedisSessionInterface(SessionInterface):
-    serializer = pickle
-    session_class = RedisSession
-
-    def __init__(self, redis=None, prefix='session:'):
-        if redis is None:
-            redis = Redis()
-        self.redis = redis
-        self.prefix = prefix
-
-    def generate_sid(self):
-        return str(uuid4())
-
-    def get_redis_expiration_time(self, app, session):
-        if session.permanent:
-            return app.permanent_session_lifetime
-        return timedelta(days=1)
-
-    def open_session(self, app, request):
-        sid = request.cookies.get(app.session_cookie_name)
-        if not sid:
-            sid = self.generate_sid()
-            return self.session_class(sid=sid, new=True)
-        try:
-            val = self.redis.get(self.prefix + sid)
-        except redis.ConnectionError:
-            print("Redis not ready!")
-            raise
-        if val is not None:
-            data = self.serializer.loads(val)
-            return self.session_class(data, sid=sid)
-        return self.session_class(sid=sid, new=True)
-
-    def save_session(self, app, session, response):
-        domain = self.get_cookie_domain(app)
-        if not session:
-            self.redis.delete(self.prefix + session.sid)
-            if session.modified:
-                response.delete_cookie(app.session_cookie_name,
-                                       domain=domain)
-            return
-        redis_exp = self.get_redis_expiration_time(app, session)
-        cookie_exp = self.get_expiration_time(app, session)
-        val = self.serializer.dumps(dict(session))
-        self.redis.setex(self.prefix + session.sid, val,
-                         int(redis_exp.total_seconds()))
-        response.set_cookie(app.session_cookie_name, session.sid,
-                            expires=cookie_exp, httponly=True,
-                            domain=domain)
-
+# instantiate a redis session interface in flask app
 app.session_interface = RedisSessionInterface()
 
 def getTime(seconds):
@@ -155,15 +100,6 @@ def getTime(seconds):
         return("{} minute(s) and {} seconds".format(d.minute, d.second))
     else:
         return("{} seconds".format(d.second))
-
-def mail(to="your.address@example.com", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
-    msg = MIMEText(message)
-    msg['Subject'] = subject
-    msg['From'] = "dma-my-cuckoo-server@example.com"
-    msg['To'] = to
-    s = smtplib.SMTP('your-outgoing-smtp-that-relays-for-you.local')
-    s.send_message(msg)
-    s.quit()
 
 def grabTask(username, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
@@ -187,12 +123,13 @@ def statusDevel(username, retmax=20):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     # read in all the keys
     k = red.keys()
-    if len(k) > 1:
+    if len(k) >= 1:
         for ke in k:
             key = ke.decode('utf-8')
             keySplit = key.split(":")
+            flavour = keySplit[2]
             if key.count(":") == 2:
-                print("Grabbing client {} flavour {}".format(keySplit[1], keySplit[2]))
+                print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
                 t = grabTask(username, keySplit[2])
                 #x.append(fetchTask(t, retmax))
                 x = fetchTask(t, retmax)
@@ -238,7 +175,7 @@ def fetchTask(t, retmax):
             x = [{'task': {'guest': {'id': 42, 'name': 'Windows_reload', 'label': 'Windows_reload', 'task_id': 42, 'manager': 'VirtualBox', 'shutdown_on': '2016-02-13 00:36:16', 'started_on': '2016-02-13 00:33:56'}, 'target': '/tmp/cuckoo-tmp/upload_S6wOsp/calc.exe', 'priority': 1, 'sample_id': 19, 'shrike_refer': None, 'status': 'reported', 'anti_issues': None, 'processing_finished_on': None, 'signatures_started_on': None, 'signatures_finished_on': None, 'shrike_msg': None, 'custom': '', 'signatures_total': None, 'analysis_started_on': None, 'completed_on': '2016-02-13 00:36:16', 'dropped_files': None, 'options': '', 'reporting_started_on': None, 'package': 'exe', 'parent_id': None, 'enforce_timeout': False, 'clock': '2015-10-16 00:33:55', 'tags': [], 'machine_id': None, 'registry_keys_modified': None, 'timeout': 0, 'domains': None, 'platform': '', 'machine': 'Windows_7_ent_sp1_x86_en', 'processing_started_on': None, 'added_on': '2016-02-13 00:33:55', 'timedout': False, 'analysis_finished_on': None, 'errors': [], 'category': 'file', 'started_on': '2016-02-13 00:33:56', 'shrike_url': None, 'files_written': None, 'signatures_alert': None, 'reporting_finished_on': None, 'running_processes': None, 'api_calls': None, 'sample': {'md5': 'e9cc8c20b0e682c77b97e6787de16e5d', 'file_type': 'PE32 executable (GUI) Intel 80386, for MS Windows', 'sha256': 'ef854d21cbf297ee267f22049b773ffeb4c1ff1a3e55227cc2a260754699d644', 'crc32': '03C45201', 'sha512': '1a3b9b2d16a4404b29675ab1132ad542840058fd356e0f145afe5d0c1d9e1653de28314cd24406b85f09a9ec874c4339967d9e7acb327065448096c5734502c7', 'file_size': 115200, 'id': 42, 'ssdeep': '1536:Zl14rQcWAkN7GAlqbkfAGQGV8aMbrNyrf1w+noPvaeBsCXK15Zr6O:7mZWXyaiedMbrN6pnoXPBsr5ZrR', 'sha1': '8be674dec4fcf14ae853a5c20a9288bff3e0520a'}, 'id': 42, 'shrike_sid': None, 'memory': False, 'crash_issues': None}}]
     return x
 
-def status(username, retmax=20):
+def status(username, retmax=20, flavour="v1"):
     tasks = {}
 
     if retmax == 'all':
@@ -248,8 +185,8 @@ def status(username, retmax=20):
 
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
-    if len(k) > 1:
-        t = red.smembers("t:"+username+":modified")
+    if len(k) >= 1:
+        t = red.smembers("t:"+username+":HEAD")
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -471,9 +408,12 @@ def upload():
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
-def pfetch(taskid, auth=auth):
+def pfetch(taskid, auth=auth, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+auth.username()+":modified")
+    if flavour == "v1":
+        t = red.smembers("t:"+auth.username()+":HEAD")
+    else:
+        t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/pdf")
@@ -483,10 +423,12 @@ def pfetch(taskid, auth=auth):
 
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
-def rfetch(taskid, auth=auth):
+def rfetch(taskid, auth=auth, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = red.smembers("t:"+auth.username()+":modified")
-    print(t)
+    if flavour == "v1":
+        t = red.smembers("t:"+auth.username()+":HEAD")
+    else:
+        t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
