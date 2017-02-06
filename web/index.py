@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-import os.path, sys, time, random
+import os.path, sys, time, random, pprint
 from pathlib import Path
 import requests, json, pickle
 import hashlib
@@ -52,15 +52,25 @@ except:
 # Configurables
 from DMAconfig import *
 
+from flask_debugtoolbar import DebugToolbarExtension
+
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
+app.config['SECRET_KEY'] = 'Replace WITH your $ecret K3y!'
+app.config['PREFERRED_URL_SCHEME'] = 'http'
+
+# If DEBUG mode is on, make sure we see all the necessary outputs
 if DEBUG:
     app.config['DEBUG'] = True
+    toolbar = DebugToolbarExtension(app)
     # Disable GET log, also disable Debug Log
     import logging
     log = logging.getLogger('werkzeug')
     log.disabled = False
+    pp = pprint.PrettyPrinter(indent=4)
+    flaskAppConfig = app.config
+    pp.pprint(flaskAppConfig)
 else:
     app.config['DEBUG'] = False
 
@@ -124,7 +134,6 @@ def statusDevel(username, retmax=20, flavour="v1"):
         for ke in k:
             key = ke.decode('utf-8')
             keySplit = key.split(":")
-                
             if key.count(":") == 2:
                 flavour = keySplit[2]
                 if DEBUG: print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
@@ -229,7 +238,7 @@ def cuckooStatus():
     try:
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
         return json.loads(r.text)
-    except requests.exceptions.RequestException as e:
+    except (IndexError, requests.exceptions.RequestException) as e:
         if DEBUG: print(e)
         return render_template('iamerror.html')
 
@@ -349,7 +358,7 @@ def sylph():
 def index():
     try:
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
-    except requests.exceptions.RequestException as e:
+    except (IndexError, requests.exceptions.RequestException) as e:
         return render_template('iamerror.html', e=e)
 
     retmax=20

@@ -2,6 +2,7 @@ Flask
 Flask-API
 Flask-Bcrypt
 Flask-HTTPAuth
+Flask-DebugToolbar
 python-magic
 redis
 requests
