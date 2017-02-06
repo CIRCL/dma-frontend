@@ -104,13 +104,10 @@ def getTime(seconds):
 def grabTask(username, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
-    if flavour == "v1" or not flavour:
-        t = red.smembers("t:"+username)
-    else:
-        t = red.smembers("t:"+username+":"+ flavour)
+    t = checkFlavour(flavour, red)
     return t
 
-def statusDevel(username, retmax=20):
+def statusDevel(username, retmax=20, flavour="v1"):
     tasks = {}
     x = []
 
@@ -131,7 +128,7 @@ def statusDevel(username, retmax=20):
             if key.count(":") == 2:
                 flavour = keySplit[2]
                 if DEBUG: print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
-                t = grabTask(username, keySplit[2])
+                t = grabTask(username, flavour)
                 #x.append(fetchTask(t, retmax))
                 x = fetchTask(t, retmax)
             elif key.count(":") == 1:
@@ -173,12 +170,15 @@ def fetchTask(t, retmax):
             x.append(j)
         else:
             # Some times we get a bad response and need to handle it. This also serves as place-debug-holder to see what is include in the variable 'x'
-            x = [{'task': {'guest': {'id': 42, 'name': 'Windows_reload', 'label': 'Windows_reload', 'task_id': 42, 'manager': 'VirtualBox', 'shutdown_on': '2016-02-13 00:36:16', 'started_on': '2016-02-13 00:33:56'}, 'target': '/tmp/cuckoo-tmp/upload_S6wOsp/calc.exe', 'priority': 1, 'sample_id': 19, 'shrike_refer': None, 'status': 'reported', 'anti_issues': None, 'processing_finished_on': None, 'signatures_started_on': None, 'signatures_finished_on': None, 'shrike_msg': None, 'custom': '', 'signatures_total': None, 'analysis_started_on': None, 'completed_on': '2016-02-13 00:36:16', 'dropped_files': None, 'options': '', 'reporting_started_on': None, 'package': 'exe', 'parent_id': None, 'enforce_timeout': False, 'clock': '2015-10-16 00:33:55', 'tags': [], 'machine_id': None, 'registry_keys_modified': None, 'timeout': 0, 'domains': None, 'platform': '', 'machine': 'Windows_7_ent_sp1_x86_en', 'processing_started_on': None, 'added_on': '2016-02-13 00:33:55', 'timedout': False, 'analysis_finished_on': None, 'errors': [], 'category': 'file', 'started_on': '2016-02-13 00:33:56', 'shrike_url': None, 'files_written': None, 'signatures_alert': None, 'reporting_finished_on': None, 'running_processes': None, 'api_calls': None, 'sample': {'md5': 'e9cc8c20b0e682c77b97e6787de16e5d', 'file_type': 'PE32 executable (GUI) Intel 80386, for MS Windows', 'sha256': 'ef854d21cbf297ee267f22049b773ffeb4c1ff1a3e55227cc2a260754699d644', 'crc32': '03C45201', 'sha512': '1a3b9b2d16a4404b29675ab1132ad542840058fd356e0f145afe5d0c1d9e1653de28314cd24406b85f09a9ec874c4339967d9e7acb327065448096c5734502c7', 'file_size': 115200, 'id': 42, 'ssdeep': '1536:Zl14rQcWAkN7GAlqbkfAGQGV8aMbrNyrf1w+noPvaeBsCXK15Zr6O:7mZWXyaiedMbrN6pnoXPBsr5ZrR', 'sha1': '8be674dec4fcf14ae853a5c20a9288bff3e0520a'}, 'id': 42, 'shrike_sid': None, 'memory': False, 'crash_issues': None}}]
+            # To see what exactly does on, refer to DMAconfig.py
+            x = xJSON # NB, this cariable comes from DMAconfig.py
     return x
 
 def status(username, retmax=20, flavour="v1"):
     tasks = {}
+    x = []
 
+    # Check if we should limit the maximum analyses returned
     if retmax == 'all':
         retmax = -1
     else:
@@ -187,7 +187,8 @@ def status(username, retmax=20, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     k = red.keys()
     if len(k) >= 1:
-        t = red.smembers("t:"+username+":HEAD")
+        ## /!\ IMPLEMENT MULTI INSTANCE
+        t = red.smembers("t:"+username+":modified")
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -199,11 +200,11 @@ def status(username, retmax=20, flavour="v1"):
                 gotdata = 'null'
     else:
         t = red.smembers("t:"+username)
-    x = []
     at = list(t)
-    at = [a for a in at if a != b'null']
+    # Skip entries that are null and entries that have no task ID
+    at = [a for a in at if (a != b'null') and (a[:1] != b':')]
     for task in sorted(at, key=lambda x: int(x.split(b':')[0]), reverse=True)[:retmax]:
-        ## IMPLEMENT MULTI INSTANCE
+        ## /!\ IMPLEMENT MULTI INSTANCE
         if "-" in task.decode('utf-8'):
             task = task.decode('utf-8').split(":")[0]
         else:
@@ -214,7 +215,8 @@ def status(username, retmax=20, flavour="v1"):
             x.append(j)
         else:
             # Some times we get a bad response and need to handle it. This also serves as place-debug-holder to see what is include in the variable 'x'
-            x = [{'task': {'guest': {'id': 42, 'name': 'Windows_reload', 'label': 'Windows_reload', 'task_id': 42, 'manager': 'VirtualBox', 'shutdown_on': '2016-02-13 00:36:16', 'started_on': '2016-02-13 00:33:56'}, 'target': '/tmp/cuckoo-tmp/upload_S6wOsp/calc.exe', 'priority': 1, 'sample_id': 19, 'shrike_refer': None, 'status': 'reported', 'anti_issues': None, 'processing_finished_on': None, 'signatures_started_on': None, 'signatures_finished_on': None, 'shrike_msg': None, 'custom': '', 'signatures_total': None, 'analysis_started_on': None, 'completed_on': '2016-02-13 00:36:16', 'dropped_files': None, 'options': '', 'reporting_started_on': None, 'package': 'exe', 'parent_id': None, 'enforce_timeout': False, 'clock': '2015-10-16 00:33:55', 'tags': [], 'machine_id': None, 'registry_keys_modified': None, 'timeout': 0, 'domains': None, 'platform': '', 'machine': 'Windows_7_ent_sp1_x86_en', 'processing_started_on': None, 'added_on': '2016-02-13 00:33:55', 'timedout': False, 'analysis_finished_on': None, 'errors': [], 'category': 'file', 'started_on': '2016-02-13 00:33:56', 'shrike_url': None, 'files_written': None, 'signatures_alert': None, 'reporting_finished_on': None, 'running_processes': None, 'api_calls': None, 'sample': {'md5': 'e9cc8c20b0e682c77b97e6787de16e5d', 'file_type': 'PE32 executable (GUI) Intel 80386, for MS Windows', 'sha256': 'ef854d21cbf297ee267f22049b773ffeb4c1ff1a3e55227cc2a260754699d644', 'crc32': '03C45201', 'sha512': '1a3b9b2d16a4404b29675ab1132ad542840058fd356e0f145afe5d0c1d9e1653de28314cd24406b85f09a9ec874c4339967d9e7acb327065448096c5734502c7', 'file_size': 115200, 'id': 42, 'ssdeep': '1536:Zl14rQcWAkN7GAlqbkfAGQGV8aMbrNyrf1w+noPvaeBsCXK15Zr6O:7mZWXyaiedMbrN6pnoXPBsr5ZrR', 'sha1': '8be674dec4fcf14ae853a5c20a9288bff3e0520a'}, 'id': 42, 'shrike_sid': None, 'memory': False, 'crash_issues': None}}]
+            # To see what exactly does on, refer to DMAconfig.py
+            x = xJSON # NB, this cariable comes from DMAconfig.py
     return x
 
 def machines():
@@ -243,6 +245,14 @@ def checkURL():
         HOST=re.split(':', URI[1])[0]
         URL=URI[0]+"://"+URI[1]
     return URL
+
+def checkFlavour(flavour, redis):
+    if flavour == "v1" or not flavour:
+        t = redis.smembers("t:"+auth.username()+":HEAD")
+        return t
+    else:
+        t = redis.smembers("t:"+auth.username()+":modified")
+        return t
 
 @auth.verify_password
 def verify_pw(username, password):
@@ -306,6 +316,7 @@ def api():
     if request.method == 'GET':
         return render_template('api.json')
 
+@app.route('/sylph/', methods=['GET', 'POST'])
 @app.route('/sylph', methods=['GET', 'POST'])
 @auth.login_required
 def sylph():
@@ -411,10 +422,6 @@ def upload():
 @auth.login_required
 def pfetch(taskid, auth=auth, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    if flavour == "v1":
-        t = red.smembers("t:"+auth.username()+":HEAD")
-    else:
-        t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/pdf")
@@ -426,10 +433,7 @@ def pfetch(taskid, auth=auth, flavour="v1"):
 @auth.login_required
 def rfetch(taskid, auth=auth, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    if flavour == "v1":
-        t = red.smembers("t:"+auth.username()+":HEAD")
-    else:
-        t = red.smembers("t:"+auth.username()+":modified")
+    t = checkFlavour(red)
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         if DEBUG: print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
