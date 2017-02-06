@@ -433,7 +433,7 @@ def pfetch(taskid, auth=auth, flavour="v1"):
 @auth.login_required
 def rfetch(taskid, auth=auth, flavour="v1"):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = checkFlavour(red)
+    t = checkFlavour(flavour, red)
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         if DEBUG: print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
