@@ -74,11 +74,12 @@ SUBMISSION_MAIL
 
 ## Config web/DMAconfig.py
 
-In the web/DMAconfig.py file you need to change the following 3 variables and 1 function:
+In the web/DMAconfig.py file you need to change the following 4 variables and 1 function:
 
 ```
 ADMINS
 BASE_URL
+MYPROXYHOST
 UPLOAD_FOLDER
 
 def mail(to="your.address@example.com", subject="[DMA] #fail where is the subject", message="I pity you fool! Please provide a message."):
