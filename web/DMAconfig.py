@@ -1,5 +1,6 @@
 ADMINS = [ "yourBasicAuthAdminUsername" ]
 UPLOAD_FOLDER = "/Users/steve/Desktop/code/dma-frontend/web/static/upload/"
+MYPROXYHOST="www.example.com"
 MAINTENANCE  = False
 DEBUG = True
 # One cuckoo instance
