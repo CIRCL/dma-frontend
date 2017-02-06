@@ -127,14 +127,15 @@ def statusDevel(username, retmax=20):
         for ke in k:
             key = ke.decode('utf-8')
             keySplit = key.split(":")
-            flavour = keySplit[2]
+                
             if key.count(":") == 2:
-                print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
+                flavour = keySplit[2]
+                if DEBUG: print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
                 t = grabTask(username, keySplit[2])
                 #x.append(fetchTask(t, retmax))
                 x = fetchTask(t, retmax)
             elif key.count(":") == 1:
-                print("Grabbing client {} flavour v1".format(keySplit[1]))
+                if DEBUG: print("Grabbing client {} flavour v1".format(keySplit[1]))
             else:
                 print("Either less then 1 or more then 2 in line {}".format(key))
                 # Implement mailer for errors mail("$ERROR")
@@ -227,7 +228,7 @@ def cuckooStatus():
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
         return json.loads(r.text)
     except requests.exceptions.RequestException as e:
-        print(e)
+        if DEBUG: print(e)
         return render_template('iamerror.html')
 
 
@@ -273,7 +274,7 @@ def dmabeta():
 @app.route('/api', methods=['GET', 'POST'])
 @auth.login_required
 def api():
-    print("This is an API place-debug-holder")
+    if DEBUG: print("This is an API place-debug-holder")
     # Simple post for base64 encoded binary. Return uuid and map uuid to subsmission id
     # Submit and return uuid
     URL = checkURL()
@@ -300,7 +301,7 @@ def api():
         uuidSubmission = str(uuid4())
         for machine in m:
             r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+machine+":"+fExtension+":"+ uuidSubmission)
-            print("Submitting: {} to Machine: {}".format(str(sfname), machine))
+            if DEBUG: print("Submitting: {} to Machine: {}".format(str(sfname), machine))
         return render_template('api.json', s=s, uuidSubmission=uuidSubmission)
     if request.method == 'GET':
         return render_template('api.json')
@@ -320,7 +321,7 @@ def sylph():
         else:
             s = statusDevel(auth.username(), retmax=20)
         if request.form['errors']:
-            print(request.form.getlist('errors'))
+            if DEBUG: print(request.form.getlist('errors'))
             errors = request.form['errors']
         else:
             errors = ""
@@ -403,7 +404,7 @@ def upload():
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         uuidSubmission = str(uuid4())
         r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package']+":"+ uuidSubmission)
-        print("Submitting: {}".format(str(sfname)))
+        if DEBUG: print("Submitting: {}".format(str(sfname)))
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, uuid=uuidSubmission)
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
@@ -431,7 +432,7 @@ def rfetch(taskid, auth=auth, flavour="v1"):
         t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
-        print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
+        if DEBUG: print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
         return r.text
     else:

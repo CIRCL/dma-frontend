@@ -1,6 +1,7 @@
 from werkzeug.datastructures import CallbackDict
 from flask.sessions import SessionInterface, SessionMixin
 from redis import Redis
+from uuid import uuid4
 import pickle
 
 class RedisSession(CallbackDict, SessionMixin):
