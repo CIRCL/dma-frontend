@@ -256,7 +256,7 @@ def verify_pw(username, password):
 @app.route('/dma')
 def dma():
     # The following check is to make revers proxies happy
-    if (HOST == "www.example.com") or (HOST == "example.com"):
+    if (HOST == MYPROXYHOST) or (HOST == MYPROXYHOST.replace("www.", "", 1)):
         return redirect('/dma/')
     else:
         return redirect('/')
@@ -265,7 +265,7 @@ def dma():
 @app.route('/dmabeta')
 def dmabeta():
     # The following check is to make revers proxies happy
-    if (HOST == "www.example.com") or (HOST == "example.com"):
+    if (HOST == MYPROXYHOST) or (HOST == MYPROXYHOST.replace("www.", "", 1)):
         return redirect('/dmabeta/')
     else:
         return redirect('/')
