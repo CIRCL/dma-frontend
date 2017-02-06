@@ -4,7 +4,7 @@
   <title>&lt;3 CIRCL - DMA - Dynamic Malware Analysis - Sylph &lt;3</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Maintenance page to ease the wait">
+  <meta name="description" content="Sylph Development View">
   <meta name="author" content="CIRCL">
 
   <link href="static/css/style.css" rel="stylesheet">
@@ -116,7 +116,7 @@
                         <!-- PDF -->
                         <col width="50">
                         <!-- Task ID -->
-                        <col width="80">
+                        <col width="50">
                         <!-- Submitter -->
                         <col width="100">
                         <!-- cuckoo Flav -->
@@ -124,10 +124,10 @@
                         <!-- Sample -->
                         <col width="250">
                         <!-- Status -->
-                        <col width="130">
+                        <col width="80">
                         {% if errors == 'ERR' %}
                             <!-- Error(s) -->
-                            <col width="">
+                            <col width="80">
                         {% endif %}
                         <!-- System -->
                         <col width="300">
@@ -152,9 +152,9 @@
                         {% elif t['task']['status'] == 'reported' %}
                             <tr class="success">
                         {% elif t['task']['status'] == 'running' %}
-			    <tr class="warning">
+                            <tr class="warning">
                         {% elif t['task']['status'] == 'pending' %}
-			    <tr class="info">
+                            <tr class="info">
                         {% else %}
                             <tr class="error">
                         {% endif %}
@@ -163,7 +163,7 @@
                                         <!-- PDF -->
                                         <td>
                                         {% if t['task']['status'] == 'reported' %}
-                                            <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}" target="_blank"><img src="static/img/Pdf-Icon-fs8.png" style="height:40px;border:0"></a>
+                                            <a href="{{ urlPath }}/pfetch/{{ t['task']['id'] }}" data-toggle="tooltip" title="Download PDF" target="_blank"><img src="static/img/Pdf-Icon-fs8.png" style="height:40px;border:0"></a>
                                         {% else %}
                                             N/A
                                         {% endif %}
@@ -194,7 +194,8 @@
                                         {% if errors == 'ERR' %}
                                             <td>
                                                 {% if t['task']['errors']|length > 0 %}
-                                                    {{ t['task']['errors'][0] }}
+                                                <a href="#" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</a>
+
                                                 {% endif %}
                                             </td>
                                         {% endif %}
