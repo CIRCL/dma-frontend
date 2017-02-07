@@ -197,7 +197,7 @@ def status(username, retmax=20, flavour="v1"):
     k = red.keys()
     if len(k) >= 1:
         ## /!\ IMPLEMENT MULTI INSTANCE
-        t = red.smembers("t:"+username+":modified")
+        t = checkFlavour(flavour, red)
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -233,14 +233,14 @@ def machines():
     r = requests.get(BASE_URL[0]+MACHINES_LIST)
     return json.loads(r.text)
 
-def cuckooStatus():
+def cuckooStatus(URL=None, username=None):
     ## IMPLEMENT MULTI INSTANCE
     try:
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
         return json.loads(r.text)
     except (IndexError, requests.exceptions.RequestException) as e:
         if DEBUG: print(e)
-        return render_template('iamerror.html')
+        return render_template('iamerror.html', e=e, user=username, urlPath=URL)
 
 
 def checkURL():
@@ -331,44 +331,47 @@ def api():
 def sylph():
     retmax=20
     username = auth.username()
-    cs = cuckooStatus()
     URL = checkURL()
+    cs = cuckooStatus(URL, username)
     errors = "ERR"
     if request.method == 'POST':
         if request.form['retmax']:
             retmax = request.form['retmax']
-            s = statusDevel(auth.username(), retmax=retmax)
+            s = statusDevel(username, retmax=retmax)
         else:
-            s = statusDevel(auth.username(), retmax=20)
+            s = statusDevel(username, retmax=20)
         if request.form['errors']:
             if DEBUG: print(request.form.getlist('errors'))
             errors = request.form['errors']
         else:
             errors = ""
     if request.method == 'GET':
-        s = statusDevel(auth.username())
+        s = statusDevel(username)
     if username in ADMINS:
         return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax, errors=errors)
     else:
         e="Permission denied!"
-        return render_template('iamerror.html', e=e, user=username)
+        return render_template('iamerror.html', e=e, user=username, urlPath=URL)
 
 @app.route('/', methods=['GET', 'POST'])
 @auth.login_required
 def index():
+
+    # Make sure, one last time, that the cuckoo API is up.
+    URL = checkURL()
     try:
         r = requests.get(BASE_URL[0]+CUCKOO_STATUS)
     except (IndexError, requests.exceptions.RequestException) as e:
-        return render_template('iamerror.html', e=e)
+        return render_template('iamerror.html', e=e, urlPath=URL)
 
+    username = auth.username()
     retmax=20
 
+    # Toggle maintenance mode
     if MAINTENANCE:
         chkTime = os.path.getmtime('static/img/online_communities.png')
         mt = getTime(time.time() - chkTime)
-        URL = checkURL()
-        username = auth.username()
-        cs = cuckooStatus()
+        cs = cuckooStatus(URL, username)
         if XKCD:
             try:
                 maintenanceXKCD = xkcd.getRandomComic()
@@ -383,20 +386,21 @@ def index():
         with open('static/img/online_communities.png', 'a'):
             os.utime('static/img/online_communities.png', None)
 
-    URL = checkURL()
-    username = auth.username()
+    # Get form contents from POST
     if request.method == 'POST':
         if request.form['retmax']:
             retmax = request.form['retmax']
-            s = status(auth.username(), retmax=retmax)
+            s = status(username, retmax=retmax)
         else:
-            s = status(auth.username())
+            s = status(username)
 
+    # A simple get will only return the default status
     if request.method == 'GET':
-        s = status(auth.username())
+        s = status(username)
 
     m = machines()
-    cs = cuckooStatus()
+    cs = cuckooStatus(URL, username)
+    #if DEBUG: print("Passing the following to template.\ns={} machines={}\nurlPath={}\nuser={}\ncuckooStatus={}\nretmax={}".format(s, m, URL, username, csp, retmax))
     return render_template('main.html', s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, retmax=retmax)
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -405,8 +409,8 @@ def upload():
     URL = checkURL()
     s = status(auth.username())
     m = machines()
-    cs = cuckooStatus()
     username = auth.username()
+    cs = cuckooStatus(URL, username)
     if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
         f = request.files['sample']
         if f:

@@ -1,82 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <title>CIRCL - DMA - Dynamic Malware Analysis - upload interface</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <meta http-equiv="refresh" content="60;url={{ urlPath }}" >
+{% extends "base.html" %}
+{% block title %}Upload Interface - {% endblock %}
+{% block head %}
+    <meta name="description" content="Main page">
+    {{ super() }}
+{% endblock %}
 
+{% block content %}
 
-    <!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
-    <!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
-    <!--script src="js/less-1.3.3.min.js"></script-->
-    <!--append ‘#!watch’ to the browser URL, then refresh the page. -->
-
-    <link href="static/css/style.css" rel="stylesheet">
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="static/css/tablecloth.css" rel="stylesheet">
-    <link href="static/css/prettify.css" rel="stylesheet">
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-        <script src="js/html5shiv.js"></script>
-    <![endif]-->
-
-    <!-- Fav and touch icons -->
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="static/img/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="static/img/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="static/img/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="static/img/apple-touch-icon-57-precomposed.png">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <script type="text/javascript" src="static/js/jquery.min.js"></script>
-    <script type="text/javascript" src="static/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="static/js/scripts.js"></script>
-    <script type="text/javascript" src="static/js/bootstrap-select.js"></script>
-    <script src="static/js/jquery.metadata.js"></script>
-    <script src="static/js/jquery.tablesorter.min.js"></script>
-    <script src="static/js/jquery.tablecloth.js"></script>
-
-    <link href="static/css/bootstrap-select.css" rel="stylesheet">
-        <script type="text/javascript">
-            $(document).ready(function(e) {
-                $('.selectpicker').selectpicker();
-            });
-        </script>
-        <script type="text/javascript" charset="utf-8">
-            $(document).ready(function() {
-                $("table").tablecloth({
-                    sortable: true,
-                    condensed: true,
-                    striped: true,
-                    bordered: true
-                });
-            });
-    </script>
-</head>
-
-<body>
-
-{% include 'forkme.html' ignore missing %}
-
-<div class="container-fluid">
-    <div class="row-fluid">
-        <div class="span12">
-            <div class="navbar">
-                <div class="navbar-inner">
-                    <div class="container-fluid">
-                        <a data-target=".navbar-responsive-collapse" data-toggle="collapse" class="btn btn-navbar"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></a> <a href="{{ urlPath }}" class="brand"><img src="static/img/dma.png" class="img-rounded"/>(BETA v2)</a>
-                        <div class="nav-collapse collapse navbar-responsive-collapse">
-                            <ul class="nav pull-right">
-                                <li> </li>
-                                <li>Logged as <b>{{ user }}</b></li>
-                                <li class="divider-vertical"> </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="hero-unit">
                 <p class="lead">
                    You can upload suspicious executables or documents to obtain a dynamic analysis report. The documents or executables files are not shared with external parties. An analysis can take up to 15 minutes.
@@ -165,7 +95,7 @@
                         <!-- PDF -->
                         <col width="50">
                         <!-- Task ID -->
-                        <col width="80">
+                        <col width="50">
                         <!-- Submitter -->
                         <col width="100">
                         <!-- cuckoo Flav -->
@@ -173,15 +103,15 @@
                         <!-- Sample -->
                         <col width="250">
                         <!-- Status -->
-                        <col width="130">
+                        <col width="80">
                         <!-- Error(s) -->
-                        <col width="">
+                        <col width="80">
                         <!-- System -->
                         <col width="300">
                         <!-- Date -->
                         <col width="200">
                         <!-- Header of analysis -->
-                        <tr><th>PDF</th><th>Task id</th><th>Submitter</th><th>cuckoo flavour<th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
+                        <tr><th>PDF</th><th>Task ID</th><th>Submitter</th><th>cuckoo flavour<th>Sample</th><th>Status</th><th>Error(s)</th><th>System</th><th>Date</th></tr>
                     </thead>
 
                     {% for t in s %}
@@ -193,9 +123,9 @@
                         {% elif t['task']['status'] == 'reported' %}
                             <tr class="success">
                         {% elif t['task']['status'] == 'running' %}
-			    <tr class="warning">
+                            <tr class="warning">
                         {% elif t['task']['status'] == 'pending' %}
-			    <tr class="info">
+                            <tr class="info">
                         {% else %}
                             <tr class="error">
                         {% endif %}
@@ -233,7 +163,7 @@
                                 <!-- Error(s) -->
                                 <td>
                                     {% if t['task']['errors']|length > 0 %}
-                                        {{ t['task']['errors'][0] }}
+                                        <a href="#" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</a>
                                     {% endif %}
                                 </td>
                                 <!-- System -->
@@ -248,5 +178,6 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
 </body>
 </html>
