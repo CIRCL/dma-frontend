@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-import os.path, sys, time, random, pprint
+import time, random, pprint
 from pathlib import Path
 import requests, json, pickle
 import hashlib
@@ -15,39 +15,12 @@ from werkzeug.datastructures import CallbackDict
 from urllib.parse import urlparse
 from datetime import timedelta, datetime
 from uuid import uuid4
-import redis
-from redis import Redis
 import smtplib
 from email.mime.text import MIMEText
 import re
 
-# check for xkcd module, used in maintenance mode
-try:
-    import xkcd
-    XKCD = True
-except ImportError:
-    print("Disabling XKCD support, some unicorns are crying right now, some where :'(")
-    XKCD = False
-
-# check for DMAusers file, needed to login and auth analyses
-try:
-    from DMAusers import *
-except ImportError:
-    sys.exit("Please create a file with a users dictionary in: DMAusers.py")
-
-# check if redis is running
-try:
-    rs = Redis("localhost")
-    response = rs.client_list()
-except redis.ConnectionError:
-    sys.exit("Redis Connection Error? Is redis-server running?")
-
-# this is bad style etc, but a dirty fix for now
-# checking if run from main web app directory
-try:
-    goodPath = os.path.getmtime('static/img/online_communities.png')
-except:
-    sys.exit("You have to start index.py IN the web directory.")
+# Check sane environment
+from checkModulesEtAl import *
 
 # Configurables
 from DMAconfig import *
@@ -57,7 +30,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 # Setup Flask
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config.from_object(__name__)
-app.config['SECRET_KEY'] = 'Replace WITH your $ecret K3y!'
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config['PREFERRED_URL_SCHEME'] = 'http'
 
 # If DEBUG mode is on, make sure we see all the necessary outputs

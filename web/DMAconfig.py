@@ -1,5 +1,7 @@
 # Admin username list
 ADMINS = [ "yourBasicAuthAdminUsername", "yourOtherBasicAuthUsername" ]
+# Secret key used for flask
+SECRET_KEY = 'Replace WITH your $ecret K3y!'
 # Location of file uploads
 UPLOAD_FOLDER = "/Users/steve/Desktop/code/dma-frontend/web/static/upload/"
 # If you have no reverse-proxy, leave as-is
