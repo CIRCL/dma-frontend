@@ -1,6 +1,7 @@
 ### DMA ###
 
 web/DMAusers.py
+web/DMAconfig.py
 
 ### OSX ###
 .DS_Store
