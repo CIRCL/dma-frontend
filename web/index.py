@@ -109,15 +109,22 @@ def fetchTask(t, retmax):
             x = xJSON # NB, this cariable comes from DMAconfig.py
     return x
 
-def grabTask(flavour, redis):
-    if flavour == "v1" or not flavour:
+def grabTask(redis):
+    scardHEAD = redis.scard("t:"+auth.username()+":HEAD")
+    scardModified = redis.scard("t:"+auth.username()+":modified")
+    if scardModified > 0:
+        t = redis.smembers("t:"+auth.username()+":modified")
+        if scardHEAD > 0:
+            tH = redis.smembers("t:"+auth.username()+":HEAD")
+            for e in tH:
+                print("Added:  {}".format(len(tH)))
+                #t.add(e)
+        return t
+    elif scardHEAD > 0:
         t = redis.smembers("t:"+auth.username()+":HEAD")
         return t
-    else:
-        t = redis.smembers("t:"+auth.username()+":modified")
-        return t
 
-def statusDevel(username, retmax=20, flavour="v1"):
+def statusDevel(username, retmax=20):
     tasks = {}
     x = []
 
@@ -136,13 +143,16 @@ def statusDevel(username, retmax=20, flavour="v1"):
             keySplit = key.split(":")
             if key.count(":") == 2:
                 flavour = keySplit[2]
-                print(type(flavour))
-                if DEBUG: print("Grabbing client {} flavour {}".format(keySplit[1], flavour))
-                t = grabTask(flavour, red)
+                if DEBUG:
+                    if keySplit[1] == "circl":
+                        print(": count 2 - Grabbing client {} flavour {}".format(keySplit[1], flavour))
+                t = grabTask(red)
                 #x.append(fetchTask(t, retmax))
                 x = fetchTask(t, retmax)
             elif key.count(":") == 1:
-                if DEBUG: print("Grabbing client {} flavour v1".format(keySplit[1]))
+                if DEBUG:
+                    if keySplit[1] == "circl":
+                        print(": count 1 - Grabbing client {} flavour v1".format(keySplit[1]))
             else:
                 print("Either less then 1 or more then 2 in line {}".format(key))
                 # Implement mailer for errors mail("$ERROR")
@@ -158,9 +168,9 @@ def statusDevel(username, retmax=20, flavour="v1"):
             except IndexError:
                 gotdata = 'null'
     else:
-        t = grabTask(flavour, red)
+        t = grabTask(red)
 
-def status(username, retmax=20, flavour="v1"):
+def status(username, retmax=20):
     tasks = {}
     x = []
 
@@ -174,7 +184,7 @@ def status(username, retmax=20, flavour="v1"):
     k = red.keys()
     if len(k) >= 1:
         ## /!\ IMPLEMENT MULTI INSTANCE
-        t = grabTask(flavour, red)
+        t = grabTask(red)
         for e in k:
             # Create dictionary with index HEAD/modified
             try:
@@ -294,7 +304,6 @@ def api():
     if request.method == 'GET':
         return render_template('api.json')
 
-@app.route('/sylph/', methods=['GET', 'POST'])
 @app.route('/sylph', methods=['GET', 'POST'])
 @auth.login_required
 def sylph():
@@ -402,7 +411,7 @@ def upload():
 
 @app.route('/pfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
-def pfetch(taskid, auth=auth, flavour="v1"):
+def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
@@ -413,9 +422,9 @@ def pfetch(taskid, auth=auth, flavour="v1"):
 
 @app.route('/rfetch/<int:taskid>', methods=['GET'])
 @auth.login_required
-def rfetch(taskid, auth=auth, flavour="v1"):
+def rfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
-    t = grabTask(flavour, red)
+    t = grabTask(red)
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         if DEBUG: print(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/html")
