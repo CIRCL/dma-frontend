@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 
-import time, random, pprint
+import time, random, pprint, magic
 from pathlib import Path
 import requests, json, pickle
 import hashlib
@@ -276,10 +276,10 @@ def api():
     # Simple post for base64 encoded binary. Return uuid and map uuid to subsmission id
     # Submit and return uuid
     URL = checkURL()
-    s = status(auth.username())
+    username = auth.uesrname()
+    s = status(username)
     m = machines()
     cs = cuckooStatus()
-    username = auth.username()
     # Handle API POST
     if request.method == 'POST' and request.files['sample']:
         f = request.files['sample']
@@ -298,7 +298,7 @@ def api():
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         uuidSubmission = str(uuid4())
         for machine in m:
-            r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+machine+":"+fExtension+":"+ uuidSubmission)
+            r.rpush("submit", username + ":" + app.config['UPLOAD_FOLDER']+ "/" + sfname + ":" + machine + ":" + fExtension + ":" + uuidSubmission)
             if DEBUG: print("Submitting: {} to Machine: {}".format(str(sfname), machine))
         return render_template('api.json', s=s, uuidSubmission=uuidSubmission)
     if request.method == 'GET':
@@ -385,11 +385,12 @@ def index():
 @auth.login_required
 def upload():
     URL = checkURL()
-    s = status(auth.username())
-    m = machines()
     username = auth.username()
+    uploadFolder = app.config['UPLOAD_FOLDER']
+    s = status(username)
+    m = machines()
     cs = cuckooStatus(URL, username)
-    if request.method == 'POST' and request.files['sample'] and request.form['machine'] and request.form['package']:
+    if request.method == 'POST' and request.files['sample'] and request.form['machine'] or request.form['package']:
         f = request.files['sample']
         if f:
             try:
@@ -397,15 +398,19 @@ def upload():
             except IndexError:
                 fExtension = 'NaN'
             sfname = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
+            f.save(os.path.join(uploadFolder, sfname))
+            # libfilemagic to automagically upload and select correct type
+            with magic.Magic(flags=magic.MAGIC_MIME_TYPE) as m:
+                magik = m.id_filename(os.path.join(uploadFolder, sfname))
             hash_sha256 = hashlib.sha256()
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], sfname), mode='rb') as fSum:
+            with open(os.path.join(uploadFolder, sfname), mode='rb') as fSum:
                 for chunk in iter(lambda: fSum.read(4096), b''):
                     hash_sha256.update(chunk)
             fSumSHA256 = hash_sha256.hexdigest()
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         uuidSubmission = str(uuid4())
-        r.rpush("submit", auth.username()+":"+app.config['UPLOAD_FOLDER']+"/"+sfname+":"+request.form['machine']+":"+request.form['package']+":"+ uuidSubmission)
+        execPackage = request.form['package']
+        r.rpush("submit", username +":"+ uploadFolder +"/"+ sfname +":"+ request.form['machine'] +":"+ execPackage +":"+ uuidSubmission)
         if DEBUG: print("Submitting: {}".format(str(sfname)))
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, uuid=uuidSubmission)
 
