@@ -17,6 +17,12 @@
                 <div class="panel-body"> {{ e }} </div>
             </div>
             {% endif %}
+            <div class="panel panel-primary panel-default">
+                <div class="panel-heading">DMA Stats</div>
+                <div class="panel-body">Free disk space: <b> {{ diskFree }} </b></div>
+                <div class="panel-body">Task stats: <b> {{ taskStats }} </b></div>
+                <div class="panel-body">Load Average 1/5/15min(s): <b> {{ loadAvg }}/{{ loadAvg5 }}/{{ loadAvg15 }} </b></div>
+            </div>
         </div>
     </div>
     {% if s %}

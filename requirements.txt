@@ -3,6 +3,7 @@ Flask-API
 Flask-Bcrypt
 Flask-HTTPAuth
 Flask-DebugToolbar
+hurry.filesize
 python-magic
 redis
 requests

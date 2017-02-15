@@ -28,6 +28,38 @@ def mail(to="your.address@example.com", subject="[DMA] #fail where is the subjec
     s.send_message(msg)
     s.quit()
 
+
+# list of trusted mime types
+trustedMIME = [
+    "application/x-dosexec", # package exe
+    "application/pdf", # package pdf
+    "application/msword", # package doc
+    "text/rtf", # package doc
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", # package doc
+    "application/vnd.ms-excel", # package xls
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", # package xls
+    "application/x-shockwave-flash", # package ie
+    "text/html", # ie
+    "application/java-archive", # package jar
+    "text/x-pascal", # fail graciously
+    "application/x-msi", # package msi
+    "application/vnd.ms-cab-compressed", # package msi???
+    "application/x-mach-binary", # fail graciously for now
+    "application/zip", # package zip
+    "application/x-gzip", # package zip
+    "application/x-7z-compressed", # package zip
+    "application/vnd.oasis.opendocument.text", # package doc
+    "text/plain", # package ???
+    "application/octet-stream", # package ???
+    "image/png", # package ???
+    "image/jpeg", # package ???
+    "text/xml", # package ???
+    "inode/x-empty", # package ???
+    "application/vnd.tcpdump.pcap", # package ???
+    "application/vnd.ms-outlook", # package ???
+]
+
+# Template json, for reference what the cuckoo API feeds us.
 xJSON = [{'task': {
     'guest': {
          'id'         : 42,

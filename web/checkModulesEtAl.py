@@ -8,6 +8,12 @@ except ImportError:
     print("Disabling XKCD support, some unicorns are crying right now, some where :'(")
     XKCD = False
 
+# check for hurry.filesize, used for easy kilobyte to human readable format
+try:
+    from hurry.filesize import size
+except ImportError:
+    sys.exit("Please pip install hurry.filesize")
+
 # check for DMAusers file, needed to login and auth analyses
 try:
     from DMAusers import *

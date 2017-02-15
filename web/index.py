@@ -273,41 +273,6 @@ def dmabeta():
     else:
         return redirect('/')
 
-@app.route('/api', methods=['GET', 'POST'])
-@auth.login_required
-def api():
-    if DEBUG: print("This is an API place-debug-holder")
-    # Simple post for base64 encoded binary. Return uuid and map uuid to subsmission id
-    # Submit and return uuid
-    URL = checkURL()
-    username = auth.uesrname()
-    s = status(username)
-    m = machines()
-    cs = cuckooStatus()
-    # Handle API POST
-    if request.method == 'POST' and request.files['sample']:
-        f = request.files['sample']
-        if f:
-            try:
-                fExtension = f.filename.rsplit('.', 1)[1]
-            except IndexError:
-                fExtension = 'NaN'
-            sfname = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], sfname))
-            hash_sha256 = hashlib.sha256()
-            with open(os.path.join(app.config['UPLOAD_FOLDER'], sfname), mode='rb') as fSum:
-                for chunk in iter(lambda: fSum.read(4096), b''):
-                    hash_sha256.update(chunk)
-            fSumSHA256 = hash_sha256.hexdigest()
-        r = redis.StrictRedis(host='localhost', port=6379, db=5)
-        uuidSubmission = str(uuid4())
-        for machine in m:
-            r.rpush("submit", username + ":" + app.config['UPLOAD_FOLDER']+ "/" + sfname + ":" + machine + ":" + fExtension + ":" + uuidSubmission)
-            if DEBUG: print("Submitting: {} to Machine: {}".format(str(sfname), machine))
-        return render_template('api.json', s=s, uuidSubmission=uuidSubmission)
-    if request.method == 'GET':
-        return render_template('api.json')
-
 @app.route('/sylph', methods=['GET', 'POST'])
 @auth.login_required
 def sylph():
@@ -315,6 +280,11 @@ def sylph():
     username = auth.username()
     URL = checkURL()
     cs = cuckooStatus(URL, username)
+    diskFree = size(cs['diskspace']['analyses']['free'])
+    taskStats = cs['tasks']
+    loadAvg = '%.2f' % cs['cpuload'][0]
+    loadAvg5 = '%.2f' % cs['cpuload'][1]
+    loadAvg15 = '%.2f' % cs['cpuload'][2]
     errors = "ERR"
     if request.method == 'POST':
         if request.form['retmax']:
@@ -330,7 +300,18 @@ def sylph():
     if request.method == 'GET':
         s = status(username)
     if username in ADMINS:
-        return render_template('sylph.html', user=username, urlPath=URL, cuckooStatus=cs, s=s, retmax=retmax, errors=errors)
+        return render_template('sylph.html',
+            user=username,
+            urlPath=URL,
+            cuckooStatus=cs,
+            s=s,
+            retmax=retmax,
+            errors=errors,
+            taskStats=taskStats,
+            diskFree=diskFree,
+            loadAvg=loadAvg,
+            loadAvg5=loadAvg5,
+            loadAvg15=loadAvg15)
     else:
         e="Permission denied!"
         return render_template('iamerror.html', e=e, user=username, urlPath=URL)
@@ -422,6 +403,7 @@ def upload():
 @auth.login_required
 def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
+    # BUG: force modified
     t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
