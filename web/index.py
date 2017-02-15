@@ -196,7 +196,11 @@ def status(username, retmax=20):
                 gotdata = 'null'
     else:
         t = red.smembers("t:"+username)
-    at = list(t)
+    # If a user has not submitted t is None and a list on it fails
+    try:
+        at = list(t)
+    except:
+        at = []
     # Skip entries that are null and entries that have no task ID
     at = [a for a in at if (a != b'null') and (a[:1] != b':')]
     for task in sorted(at, key=lambda x: int(x.split(b':')[0]), reverse=True)[:retmax]:
@@ -413,6 +417,7 @@ def upload():
 @auth.login_required
 def pfetch(taskid, auth=auth):
     red = redis.StrictRedis(host='localhost', port=6379, db=5)
+    t = red.smembers("t:"+auth.username()+":modified")
     if str(taskid) in str(t):
         ## IMPLEMENT MULTI INSTANCE
         r = requests.get(BASE_URL[0]+TASKS_REPORT+str(taskid)+"/pdf")
