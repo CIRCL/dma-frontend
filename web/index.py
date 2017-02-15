@@ -280,11 +280,15 @@ def sylph():
     username = auth.username()
     URL = checkURL()
     cs = cuckooStatus(URL, username)
-    diskFree = size(cs['diskspace']['analyses']['free'])
+    if cs['version'] == '1.3-NG':
+        diskFree = "Not available on cuckoo-modified host"
+        loadAvg = loadAvg5 = loadAvg15 = 'NaN'
+    else:
+        diskFree = size(cs['diskspace']['analyses']['free'])
+        loadAvg = '%.2f' % cs['cpuload'][0]
+        loadAvg5 = '%.2f' % cs['cpuload'][1]
+        loadAvg15 = '%.2f' % cs['cpuload'][2]
     taskStats = cs['tasks']
-    loadAvg = '%.2f' % cs['cpuload'][0]
-    loadAvg5 = '%.2f' % cs['cpuload'][1]
-    loadAvg15 = '%.2f' % cs['cpuload'][2]
     errors = "ERR"
     if request.method == 'POST':
         if request.form['retmax']:
