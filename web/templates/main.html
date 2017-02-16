@@ -163,7 +163,7 @@
                                 <!-- Error(s) -->
                                 <td>
                                     {% if t['task']['errors']|length > 0 %}
-                                        <a href="#" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</a>
+                                        <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</button>
                                     {% endif %}
                                 </td>
                                 <!-- System -->

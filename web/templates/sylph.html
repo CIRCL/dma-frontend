@@ -7,24 +7,22 @@
 
 {% block content %}
 <body background="static/img/sylph.png">
-            <div class="hero-unit">
-                <p class="lead">
-                Welcome to the sylph interface of DMA.
-                </p>
-            {% if e %}
+    <div class="hero-unit">
+        <p class="lead"> Welcome to the sylph interface of DMA aka development/admin UI. </p>
+        {% if e %}
             <div class="panel panel-primary panel-default">
                 <div class="panel-heading">Malicious sample upload interface is temporarily ERROR, see error(s) below.</div>
                 <div class="panel-body"> {{ e }} </div>
             </div>
-            {% endif %}
-            <div class="panel panel-primary panel-default">
-                <div class="panel-heading">DMA Stats</div>
-                <div class="panel-body">Free disk space: <b> {{ diskFree }} </b></div>
-                <div class="panel-body">Task stats: <b> {{ taskStats }} </b></div>
-                <div class="panel-body">Load Average 1/5/15min(s): <b> {{ loadAvg }}/{{ loadAvg5 }}/{{ loadAvg15 }} </b></div>
-            </div>
+        {% endif %}
+        <div class="panel panel-primary panel-default">
+            <div class="panel-heading">DMA Stats</div>
+            <div class="panel-body">Task stats: <b> {{ taskStats }} </b></div>
+            <div class="panel-body">Free disk space: <b> {{ diskFree }} </b></div>
+            <div class="panel-body">Load Average 1/5/15min(s): <b> {{ loadAvg }}/{{ loadAvg5 }}/{{ loadAvg15 }} </b></div>
         </div>
     </div>
+
     {% if s %}
         <div class="hero-unit">
             <div class="panel panel-primary panel-default">
@@ -131,8 +129,7 @@
                                         {% if errors == 'ERR' %}
                                             <td>
                                                 {% if t['task']['errors']|length > 0 %}
-                                                <a href="#" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</a>
-
+                                                    <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ t['task']['errors'][0] }}">Errors!</button>
                                                 {% endif %}
                                             </td>
                                         {% endif %}
@@ -149,9 +146,7 @@
                 </table>
             </div>
         </div>
-    </div>
     {% endif %}
-</div>
 
 <div ng-app="">
     <p>Input box:</p>
