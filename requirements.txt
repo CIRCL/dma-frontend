@@ -4,6 +4,7 @@ Flask-Bcrypt
 Flask-HTTPAuth
 Flask-DebugToolbar
 hurry.filesize
+filemagic
 python-magic
 redis
 requests
