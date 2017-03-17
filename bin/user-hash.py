@@ -5,6 +5,7 @@ import json
 import string
 import random
 import argparse
+from shutil import copy2
 
 try:
     import bcrypt
@@ -32,6 +33,7 @@ users = {
 try:
     with open('../web/DMAusers.json') as json_data_file:
         usersFromFile = json.load(json_data_file)
+        copy2('../web/DMAusers.json', '../web/DMAusers.json.old')
 except OSError:
         usersFromFile = {}
 
