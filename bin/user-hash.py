@@ -6,6 +6,7 @@ import string
 import random
 import argparse
 from shutil import copy2
+from pathlib import Path
 
 try:
     import bcrypt
@@ -15,7 +16,7 @@ except ImportError:
 parser = argparse.ArgumentParser()
 
 parser = argparse.ArgumentParser(description='Add User to DMA')
-parser.add_argument("-u", "--user", required=True, help="Adds User to DMAusers.py and prints out a password.")
+parser.add_argument("-u", "--user", required=True, help="Adds or Changes user-passwords and prints out a password.")
 
 args = parser.parse_args()
 
@@ -47,5 +48,22 @@ for key in users:
     usersFromFile.update(users)
 print("}")
 
-with open('../web/DMAusers.json', 'w') as outfile:
+# try/except hack to force user to be in bin/ directory
+
+if Path.cwd().joinpath('web').is_dir():
+    jsonPath = 'web/DMAusers.json'
+    indexPath = 'web/index.py'
+elif Path.cwd().joinpath('../web').is_dir():
+    jsonPath = '../web/DMAusers.json'
+    indexPath = '../web/index.py'
+else:
+    jsonPath = indexPath = '/dev/null'
+    print('This is weird, I could NOT find the "web" directory, sending everything to /dev/null')
+    print('/!\\ +++ NO USER ADDED +++ /!\\')
+
+with open(jsonPath, 'w') as outfile:
     json.dump(usersFromFile, outfile)
+
+# Cheap hack to touch index.py to reload python script after user
+# change/addition. This will NOT work if debug mode is switched off.
+Path(indexPath).touch()

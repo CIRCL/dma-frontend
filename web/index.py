@@ -253,7 +253,7 @@ def verify_pw(username, password):
     else:
         return False
     g.user = user
-    return bcrypt.check_password_hash(users[username], password)
+    return bcrypt.check_password_hash(users[username], password.encode())
 
 @app.route('/dma/')
 @app.route('/dma')

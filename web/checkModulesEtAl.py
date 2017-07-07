@@ -3,6 +3,7 @@ try:
     import xkcd
     import sys
     import os
+    import json
     XKCD = True
 except ImportError:
     print("Disabling XKCD support, some unicorns are crying right now, some where :'(")
@@ -16,9 +17,10 @@ except ImportError:
 
 # check for DMAusers file, needed to login and auth analyses
 try:
-    from DMAusers import *
-except ImportError:
-    sys.exit("Please create a file with a users dictionary in: DMAusers.py")
+    with open('DMAusers.json') as json_data_file:
+        users = json.load(json_data_file)
+except OSError:
+    sys.exit("Please add a user with the bin/user-hash.py script")
 
 # check if redis is running
 try:
