@@ -37,10 +37,10 @@ else:
 def backup():
     try:
         with open(jsonPath) as json_data_file:
-            usersFromFile = json.load(json_data_file)
+            global usersFromFile = json.load(json_data_file)
             copy2('jsonPath', jsonPath + '.old')
     except OSError:
-            usersFromFile = {}
+            global usersFromFile = {}
 
 def randomPassword():
     chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
