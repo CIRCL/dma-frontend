@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 import sys
 import json
@@ -35,12 +35,14 @@ else:
     print('/!\\ +++ NO USER ADDED OR MODIFIED +++ /!\\')
 
 def backup():
+    global usersFromFile
+
     try:
         with open(jsonPath) as json_data_file:
-            global usersFromFile = json.load(json_data_file)
+            usersFromFile = json.load(json_data_file)
             copy2('jsonPath', jsonPath + '.old')
     except OSError:
-            global usersFromFile = {}
+            usersFromFile = {}
 
 def randomPassword():
     chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
@@ -53,10 +55,12 @@ if args.star:
     print("So you want to bind user: {} with VM: {}".format(args.user, args.star))
     m = hmac.new(b'steve@localhost.lu', digestmod=hashlib.blake2s)
     m.update(b'Windows_7_ent_sp1_x86_en')
-    # Windows_7_ent_sp1_x86_en_Scada_MD5User
-    baseVM = args.star
+    # Basename
     # Windows_7_ent_sp1_x86_en
-    descriptor = Scada
+    # Full Name
+    # Windows_7_ent_sp1_x86_en_HintOnWhatIsSpecialAboutVM_HashUser
+    baseVM = args.star
+    descriptor = "HintOnWhatIsSpecialAboutVM"
     hashVal = m.hexdigest()
     print(m.hexdigest())
     VMname = baseVM + '_' + descriptor + '_' + hashVal
