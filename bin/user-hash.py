@@ -8,6 +8,7 @@ import argparse
 import hmac, hashlib
 from shutil import copy2
 from pathlib import Path
+from validate_email import validate_email
 
 try:
     import bcrypt
@@ -40,9 +41,12 @@ def backup():
     try:
         with open(jsonPath) as json_data_file:
             usersFromFile = json.load(json_data_file)
-            copy2('jsonPath', jsonPath + '.old')
+            copy2(jsonPath, jsonPath + '.old')
     except OSError:
             usersFromFile = {}
+
+def chkUsername(user):
+    return validate_email(user, check_mx=True)
 
 def randomPassword():
     chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
@@ -69,6 +73,9 @@ if args.star:
 users = {
     args.user:plainText,
 }
+
+if not chkUsername(args.user):
+    sys.exit("The username wants to be an e-mail address, {} is not valid.".format(args.user))
 
 # Make a backup of current user file
 backup()

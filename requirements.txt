@@ -6,6 +6,8 @@ Flask-DebugToolbar
 hurry.filesize
 filemagic
 python-magic
+py3DNS
+validate_email
 redis
 requests
 xkcd
