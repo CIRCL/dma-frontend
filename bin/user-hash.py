@@ -13,7 +13,7 @@ from validate_email import validate_email
 
 try:
     import bcrypt
-except ImportError:
+except ImportError as err:
     sys.exit("Install bcrypt please")
 
 parser = argparse.ArgumentParser()
@@ -28,6 +28,10 @@ List users and custom bound VMs, add -u to check if user exists")
 
 # Put passed arguments into args
 args = parser.parse_args()
+
+# Check if username is a valid email address
+def chkUsername(user):
+    return validate_email(user, check_mx=True)
 
 if not args.user and not args.list:
     parser.print_help()
@@ -55,7 +59,7 @@ def backup():
         with open(jsonPath) as json_data_file:
             usersFromFile = json.load(json_data_file)
             copy2(jsonPath, jsonPath + '.old')
-    except OSError:
+    except OSError as err:
             usersFromFile = {}
 
     try:
@@ -67,13 +71,27 @@ def backup():
 
 def listAll():
     pp = pprint.PrettyPrinter(indent=4)
+    print("--------Current users-----------------------------------------------------------")
     pp.pprint(usersFromFile)
-    print("--------------------------------------------------------------------------------")
+    print("--------Current custom VMs------------------------------------------------------")
     pp.pprint(VMsFromFile)
 
-# Check if username is a valid email address
-def chkUsername(user):
-    return validate_email(user, check_mx=True)
+if args.list and not args.user and not args.star:
+    backup()
+    listAll()
+    sys.exit("Currently {} registered users and {} custom bound VMs.".format(len(usersFromFile), len(VMsFromFile)))
+
+if args.list and args.user:
+    backup()
+    listAll()
+    if args.user in usersFromFile:
+        print("--------------------------------------------------------------------------------")
+        print("{} has an account on DMA".format(args.user))
+    else:
+        print("--------------------------------------------------------------------------------")
+        print("{} has NO account on DMA".format(args.user))
+    print("--------------------------------------------------------------------------------")
+    sys.exit("Currently {} registered users and {} custom bound VMs.".format(len(usersFromFile), len(VMsFromFile)))
 
 # returns a random password with chars upper/lower/digits between 16 and 32 in size
 def randomPassword():
@@ -123,21 +141,6 @@ plainText = randomPassword()
 users = {
     args.user:plainText,
 }
-
-if args.list:
-    listAll()
-    if args.user:
-        if args.user in usersFromFile:
-            print("--------------------------------------------------------------------------------")
-            print("{} has an account on DMA".format(args.user))
-        else:
-            print("--------------------------------------------------------------------------------")
-            print("{} has NO account on DMA".format(args.user))
-    print("--------------------------------------------------------------------------------")
-    sys.exit("Currently {} registered users and {} custom bound VMs.".format(len(usersFromFile), len(VMsFromFile)))
-
-if not chkUsername(args.user):
-    sys.exit("The username wants to be an e-mail address, {} is not valid.".format(args.user))
 
 print("# User will be added or updated in web/DMAusers.json")
 print("users = {")
