@@ -1,6 +1,7 @@
 ### DMA ###
 
-web/DMAusers.py
+web/DMAusers.json
+web/DMAvms.json
 web/DMAconfig.py
 
 ### OSX ###
