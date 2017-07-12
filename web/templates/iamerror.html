@@ -2,6 +2,7 @@
 {% block title %}/!\ ERROR /!\{% endblock %}
 {% block head %}
     <meta name="description" content="Error page">
+    <link href="static/css/style.css" rel="stylesheet">
     {{ super() }}
 {% endblock %}
 
@@ -24,7 +25,9 @@
                 <div class="panel-heading">Malicious sample upload interface is temporarily ERROR.<br />
                 This is what happened:</div>
                 <div class="panel-body">
-                <b>{{ e }}</b>
+                    <p class="blink">
+                        <b>{{ e }}</b>
+                    </p>
                 </div>
             </div>
         </div>

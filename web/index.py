@@ -399,7 +399,11 @@ def upload():
         r = redis.StrictRedis(host='localhost', port=6379, db=5)
         uuidSubmission = str(uuid4())
         execPackage = request.form['package']
-        r.rpush("submit", username +":"+ uploadFolder +"/"+ sfname +":"+ request.form['machine'] +":"+ execPackage +":"+ uuidSubmission)
+        try:
+            r.rpush("submit", username +":"+ uploadFolder +"/"+ sfname +":"+ request.form['machine'] +":"+ execPackage +":"+ uuidSubmission)
+        except:
+            e="Make sure you selected a file for upload!"
+            return render_template('iamerror.html', e=e, user=username, urlPath=URL)
         if DEBUG: print("Submitting: {}".format(str(sfname)))
     return render_template('main.html', upload=request.files['sample'], s=s, machines=m, urlPath=URL, user=username, cuckooStatus=cs, uuid=uuidSubmission)
 
