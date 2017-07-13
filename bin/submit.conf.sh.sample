@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# One cuckoo server (e.g. 1 API server running)
+CUCKOO_API_URL=("http://my-cuckoo-server.local:8090")
+# Two cuckoo servers (e.g. 2 API servers running)
+#CUCKOO_API_URL=("http://my-cuckoo-server.local:8090" "http://my-cuckoo-modified-server.local:8090")
+
+CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"
+CUCKOO_API_TASKS_VIEW="/tasks/view/"
+CUCKOO_STATUS="/cuckoo/status"
+CUCKOO_COUNT=`echo ${#CUCKOO_API_URL[@]}`
+echo -n "Checking for redis-cli and mutt (want to be in \$PATH) will exit 1 if not found. "
+REDISCLI=`which redis-cli` && echo "Got redis-cli continuing…" || exit 1
+MUTTCMD=`which mutt` && echo "Got mutt continuing…" || exit 1
+
+ADMINS="yourBasicAuthAdminUsername"
+SUBMISSION_MAIL="yourSubmissionAddress@example.com"
+echo "GnuPg will be enable automagically if ~/.gnupg/gpg.conf is present, ctrl-c if that is an issue, sleeping 3 secs"
+sleep 1 && echo -n . && sleep 1 && echo -n . && sleep 1 && echo -n .

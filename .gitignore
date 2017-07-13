@@ -4,6 +4,8 @@ web/DMAusers.json
 web/DMAvms.json
 web/DMAconfig.py
 
+bin/submit.conf.sh
+
 ### OSX ###
 .DS_Store
 .AppleDouble

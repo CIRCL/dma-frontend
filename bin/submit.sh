@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
 
-# One cuckoo server (e.g. 1 API server running)
-CUCKOO_API_URL=("http://my-cuckoo-server.local:8090")
-# Two cuckoo servers (e.g. 2 API servers running)
-#CUCKOO_API_URL=("http://my-cuckoo-server.local:8090" "http://my-cuckoo-modified-server.local:8090")
-
-CUCKOO_API_TASKS_CREATE_FILE="/tasks/create/file"
-CUCKOO_API_TASKS_VIEW="/tasks/view/"
-CUCKOO_STATUS="/cuckoo/status"
-CUCKOO_COUNT=`echo ${#CUCKOO_API_URL[@]}`
-echo -n "Checking for redis-cli and mutt (want to be in \$PATH) will exit 1 if not found. "
-REDISCLI=`which redis-cli` && echo "Got redis-cli continuing…" || exit 1
-MUTTCMD=`which mutt` && echo "Got mutt continuing…" || exit 1
+. ./submit.conf.sh
 
 # If you enable GPG make sure the recipient GPG key is in the keyring of the user running submit.sh
 # This also enables file attachments of the submitted files.
@@ -22,9 +11,6 @@ if [ -e ~/.gnupg/gpg.conf ]; then
 else
     GPG_ENABLE=false
 fi
-
-ADMINS="yourBasicAuthAdminUsername"
-SUBMISSION_MAIL="yourSubmissionAddress@example.com"
 
 # functions
 function submitAdmin()
@@ -96,7 +82,7 @@ do
         do
         CUCKOO_VERSION=`curl -s ${CUCKOO_API_URL[i]}${CUCKOO_STATUS} |jq -r .version`
         # xargs is used to trim any leading spaces
-        if [ "$CUCKOO_VERSION" == "2.0-dev" ]; then
+        if [[ "$CUCKOO_VERSION" == 2.0* ]]; then
             task_id=`curl -F package=${package} -F machine=${machine} -F file=@"${file}" ${CUCKOO_API_URL[i]}${CUCKOO_API_TASKS_CREATE_FILE} | jq -r .task_id | grep '[0-9]' |xargs`
             status=$($REDISCLI -n 5 SADD t:${user}:HEAD ${task_id}:${uuid})
             echo "task_id ${task_id}"

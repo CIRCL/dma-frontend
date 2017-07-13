@@ -23,7 +23,10 @@ import re
 from checkModulesEtAl import *
 
 # Configurables
-from DMAconfig import *
+try:
+    from DMAconfig import *
+except ImportError:
+    sys.exit("No DMAconfig.py found, please copy and adjust DMAconfig.py.sample")
 
 from flask_debugtoolbar import DebugToolbarExtension
 
