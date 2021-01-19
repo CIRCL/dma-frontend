@@ -48,10 +48,10 @@ mkvirtualenv -p /usr/bin/python3 dma-frontend
 
 Make sure your shell looks something like this: (dma-frontend) cuckoo@myHost:~$
 
-If that is not the case: workong dma-frontend
+If that is not the case: workon dma-frontend
 
 ```
-sudo pip3 install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### Adding basic auth users
